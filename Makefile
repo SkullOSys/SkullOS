@@ -47,7 +47,7 @@ gui/%.o: gui/%.c
 
 # Run in QEMU
 run: os.bin
-	qemu-system-i386 -drive format=raw,file=os.bin -monitor stdio
+	qemu-system-i386 -full-screen -drive format=raw,file=os.bin -monitor stdio
 
 # Debug with QEMU
 debug: os.bin

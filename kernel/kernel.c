@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "vga.h"
+#include "boot_anim.h"
 #include "../gui/gui.h"
 
 // Kernel entry point
@@ -17,55 +18,32 @@ void kernel_entry(void) {
 
 // Main kernel function
 void kernel_main(void) {
-    // Clear the screen and set color to white on black
+    // Initialize terminal and show boot animation
     terminal_initialize();
+    show_boot_animation();
     
-    // Print welcome message
-    terminal_puts("\n  ===================================\n");
-    terminal_puts("            Skull OS             \n");
-    terminal_puts("  ===================================\n\n");
-    
-    // Display some system information
-    terminal_puts("Kernel initialized successfully!\n");
-    terminal_puts("System ready.\n\n");
-    
-    // Test some terminal functions
-    terminal_puts("Testing terminal functions:\n");
-    
-    // Test colors
-    vga_set_color(VGA_COLOR_RED, VGA_COLOR_BLACK);
-    terminal_puts("Red text\n");
-    
-    vga_set_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
-    terminal_puts("Green text\n");
-    
-    vga_set_color(VGA_COLOR_BLUE, VGA_COLOR_BLACK);
-    terminal_puts("Blue text\n");
-    
+    // Set default color to white on black
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-    terminal_puts("\nNumbers: ");
     
-    // Test number printing
-    for (int i = 1; i <= 5; i++) {
-        terminal_put_dec(i);
-        terminal_puts(" ");
-    }
+    // Display system information
+    terminal_puts("\n  ====== SkullOS System Information ======\n\n");
     
-    // Test hex output
-    terminal_puts("\n\nMemory address of kernel_main: 0x");
-    terminal_put_hex((uint32_t)&kernel_main);
-    terminal_puts("\n");
+    // Show kernel information
+    terminal_puts("Kernel version: 0.1.0\n");
+    terminal_puts("Build date: ");
+    terminal_puts(__DATE__);
+    terminal_puts(" ");
+    terminal_puts(__TIME__);
+    terminal_puts("\n\n");
     
-    // Initialize GUI (if available)
-    terminal_puts("\nInitializing GUI...\n");
+    // Initialize GUI
+    terminal_puts("Initializing system components...\n");
     gui_init();
+    terminal_puts("GUI initialized.\n\n");
     
     // Main kernel loop
-    terminal_puts("\nKernel is running. System ready.\n");
-    
-    // Infinite loop to keep the kernel running
     while (1) {
-        // We'll add more functionality here later
+        // We'll add command processing here later
         asm volatile ("hlt");
     }
 }

@@ -18,7 +18,7 @@ static void gui_put_string_at(const char* str, int x, int y) {
 // Function to initialize the GUI
 void gui_init() {
     // Display initialization message in the middle of the screen
-    const char* msg = "GUI Initialized";
+    const char* msg = "Skull GUI Initialized";
     int msg_len = 0;
     
     // Calculate message length

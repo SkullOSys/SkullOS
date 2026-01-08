@@ -37,11 +37,11 @@ Sie können diesen Befehl zu Ihrer `.zshrc` oder `.bash_profile` hinzufügen, um
 Um das Betriebssystem zu bauen, führe folgenden Befehl aus:
 
 ```bash
-make clean && make
+make clean && make && make run
 ```
 
 Um das Betriebssystem in QEMU zu starten, führe folgenden Befehl aus:
 
 ```bash
-make run
+qemu-system-i386 -drive format=raw,file=os.bin
 ```
