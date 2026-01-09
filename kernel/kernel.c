@@ -26,7 +26,7 @@ void kernel_main(void) {
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     
     // Display system information
-    terminal_puts("\n  ====== SkullOS System Information ======\n\n");
+    terminal_puts("\n====== SkullOS System Information ======\n\n");
     
     // Show kernel information
     terminal_puts("Kernel version: 0.1.0\n");
@@ -40,6 +40,10 @@ void kernel_main(void) {
     terminal_puts("Initializing system components...\n");
     gui_init();
     terminal_puts("GUI initialized.\n\n");
+    
+    // Disable cursor
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x20);
     
     // Main kernel loop
     while (1) {
