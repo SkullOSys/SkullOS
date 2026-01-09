@@ -10,7 +10,7 @@ CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I. -std=gnu99
 LDFLAGS = -T linker.ld -melf_i386 -nostdlib
 
 # Source files
-KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c
+KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/shell.c
 KERNEL_OBJS = $(KERNEL_SRCS:.c=.o)
 
 GUI_SRCS = gui/gui.c

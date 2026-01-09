@@ -2,6 +2,7 @@
 #include "vga.h"
 #include "boot_anim.h"
 #include "../gui/gui.h"
+#include "shell.h"
 
 // Kernel entry point
 __attribute__((section(".text.entry")))
@@ -45,9 +46,13 @@ void kernel_main(void) {
     outb(0x3D4, 0x0A);
     outb(0x3D5, 0x20);
     
-    // Main kernel loop
+    // Initialize and run the shell
+    terminal_puts("\nType 'help' for a list of available commands.\n\n");
+    shell_init();
+    shell_run();
+    
+    // This should never be reached
     while (1) {
-        // We'll add command processing here later
         asm volatile ("hlt");
     }
 }
