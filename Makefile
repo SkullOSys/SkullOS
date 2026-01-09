@@ -10,8 +10,10 @@ CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I. -std=gnu99
 LDFLAGS = -T linker.ld -melf_i386 -nostdlib
 
 # Source files
-KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/shell.c
-KERNEL_OBJS = $(KERNEL_SRCS:.c=.o)
+KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/shell.c kernel/idt.c kernel/pic.c
+ASM_SRCS = kernel/interrupts.asm
+DRIVER_SRCS = drivers/keyboard/keyboard.c
+KERNEL_OBJS = $(KERNEL_SRCS:.c=.o) $(DRIVER_SRCS:.c=.o) $(ASM_SRCS:.asm=.o)
 
 GUI_SRCS = gui/gui.c
 GUI_OBJS = $(GUI_SRCS:.c=.o)
@@ -39,6 +41,14 @@ kernel.elf: $(KERNEL_OBJS) $(GUI_OBJS)
 
 # Kernel objects
 kernel/%.o: kernel/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule for compiling assembly files
+%.o: %.asm
+	$(ASM) $(ASMFLAGS) $< -o $@
+
+# Rule for compiling driver files
+drivers/%.o: drivers/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # GUI objects

@@ -3,6 +3,8 @@
 #include "boot_anim.h"
 #include "../gui/gui.h"
 #include "shell.h"
+#include "idt.h"
+#include "../drivers/keyboard/keyboard.h"
 
 // Kernel entry point
 __attribute__((section(".text.entry")))
@@ -45,6 +47,16 @@ void kernel_main(void) {
     // Disable cursor
     outb(0x3D4, 0x0A);
     outb(0x3D5, 0x20);
+    
+    // Initialize IDT and keyboard
+    terminal_puts("Initializing IDT...\n");
+    idt_init();
+    
+    terminal_puts("Initializing keyboard...\n");
+    keyboard_install();
+    
+    // Enable interrupts
+    asm volatile ("sti");
     
     // Initialize and run the shell
     terminal_puts("\nType 'help' for a list of available commands.\n\n");

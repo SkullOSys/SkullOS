@@ -1,6 +1,7 @@
 #include "shell.h"
 #include "vga.h"
 #include "kernel.h"
+#include "../drivers/keyboard/keyboard.h"
 
 #define MAX_COMMAND_LENGTH 80
 
@@ -87,14 +88,10 @@ void shell_run(void) {
     shell_print_prompt();
     
     while (1) {
-        char c = 0;
-        // Wait for a key press
-        asm volatile("hlt");
+        // Get a character from the keyboard
+        char c = keyboard_getchar();
         
-        // In a real implementation, you would read from the keyboard here
-        // For now, we'll just handle Enter and Backspace
-        // This is a placeholder - you'll need to implement proper keyboard input
-        
+        // Handle special keys
         if (c == '\r' || c == '\n') {
             // Execute command
             terminal_puts("\n");
@@ -105,12 +102,13 @@ void shell_run(void) {
             command_length = 0;
             memset(command_buffer, 0, sizeof(command_buffer));
             shell_print_prompt();
-        } else if (c == '\b' && command_length > 0) {
-            // Backspace
-            command_length--;
-            command_buffer[command_length] = '\0';
-            // Move cursor back, print space, move cursor back again
-            terminal_puts("\b \b");
+        } else if (c == '\b' || c == 127) {  // Backspace or Delete
+            if (command_length > 0) {
+                command_length--;
+                command_buffer[command_length] = '\0';
+                // Move cursor back, print space, move cursor back again
+                terminal_puts("\b \b");
+            }
         } else if (command_length < MAX_COMMAND_LENGTH - 1 && c >= 32 && c <= 126) {
             // Printable character
             command_buffer[command_length++] = c;
