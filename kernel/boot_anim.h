@@ -69,7 +69,7 @@ void show_boot_animation(void) {
     if (start_y < 2) start_y = 2;
     
     // Print the skull art
-    for (int i = 0; i < SKULL_LINES; i++) {
+    for (size_t i = 0; i < SKULL_LINES; i++) {
         int x = (VGA_WIDTH - strlen(SKULL_ART[i])) / 2;
         vga_set_cursor_pos(x, start_y + i);
         vga_put_string(SKULL_ART[i]);

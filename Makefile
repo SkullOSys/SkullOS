@@ -6,11 +6,14 @@ OBJCOPY = x86_64-elf-objcopy
 
 # Flags
 ASMFLAGS = -f elf32
-CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I. -std=gnu99
+CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I./libc/include -I. -I./fs/include -std=gnu99 -nostdlib -nostdinc -fno-builtin
 LDFLAGS = -T linker.ld -melf_i386 -nostdlib
 
 # Source files
-KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/shell.c kernel/idt.c kernel/pic.c
+LIBC_SRCS = libc/string.c
+KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/shell.c kernel/idt.c kernel/pic.c kernel/fs.c kernel/memory.c $(LIBC_SRCS)
+FS_SRCS = fs/src/fs.c fs/src/initrd.c
+FS_OBJS = $(FS_SRCS:.c=.o)
 ASM_SRCS = kernel/interrupts.asm
 DRIVER_SRCS = drivers/keyboard/keyboard.c
 KERNEL_OBJS = $(KERNEL_SRCS:.c=.o) $(DRIVER_SRCS:.c=.o) $(ASM_SRCS:.asm=.o)
@@ -36,7 +39,7 @@ kernel.bin: kernel.elf
 	$(OBJCOPY) -O binary $< $@
 
 # Kernel ELF file
-kernel.elf: $(KERNEL_OBJS) $(GUI_OBJS)
+kernel.elf: $(KERNEL_OBJS) $(GUI_OBJS) $(FS_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # Kernel objects
@@ -51,18 +54,17 @@ kernel/%.o: kernel/%.c
 drivers/%.o: drivers/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# GUI objects
+# Rule for compiling libc files
+libc/%.o: libc/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule for compiling GUI files
 gui/%.o: gui/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Run in QEMU
-run: os.bin
-	qemu-system-i386 -full-screen -drive format=raw,file=os.bin -monitor stdio
-
-# Debug with QEMU
-debug: os.bin
-	qemu-system-i386 -drive format=raw,file=os.bin -s -S &
-	gdb -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
+# Rule for compiling fs files
+fs/src/%.o: fs/src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean build artifacts
 clean:
@@ -70,6 +72,11 @@ clean:
 	rm -f kernel/*.o
 	rm -f gui/*.o
 	rm -f boot/*.bin
+	rm -f drivers/*.o
+	rm -f libc/*.o
 
-# Phony targets
-.PHONY: all clean run debug
+# Run the OS in QEMU
+run: os.bin
+	qemu-system-i386 -full-screen -drive format=raw,file=os.bin -monitor stdio
+
+.PHONY: all clean run

@@ -28,6 +28,14 @@ enum vga_color {
 // VGA text mode buffer address
 #define VGA_MEMORY (uint16_t*)0xB8000
 #define VGA_WIDTH 80
+
+// Terminal functions
+void terminal_initialize(void);
+void terminal_clear(void);
+void terminal_putchar(char c);
+void terminal_puts(const char* str);
+void terminal_set_color(uint8_t fg, uint8_t bg);
+void vga_set_color(enum vga_color fg, enum vga_color bg);
 #define VGA_HEIGHT 25
 
 // Function prototypes

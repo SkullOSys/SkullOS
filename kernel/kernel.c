@@ -5,6 +5,8 @@
 #include "shell.h"
 #include "idt.h"
 #include "../drivers/keyboard/keyboard.h"
+#include "fs.h"
+#include "memory.h"
 
 // Kernel entry point
 __attribute__((section(".text.entry")))
@@ -48,6 +50,10 @@ void kernel_main(void) {
     outb(0x3D4, 0x0A);
     outb(0x3D5, 0x20);
     
+    // Initialize memory manager
+    terminal_puts("Initializing memory manager...\n");
+    memory_init();
+    
     // Initialize IDT and keyboard
     terminal_puts("Initializing IDT...\n");
     idt_init();
@@ -58,9 +64,15 @@ void kernel_main(void) {
     // Enable interrupts
     asm volatile ("sti");
     
+    // Initialize filesystem
+    terminal_puts("Initializing filesystem...\n");
+    fs_initialize();
+    
     // Initialize and run the shell
-    terminal_puts("\nType 'help' for a list of available commands.\n\n");
+    terminal_puts("Initializing shell...\n");
     shell_init();
+    fs_init_commands();  // Register filesystem commands
+    terminal_puts("\nType 'help' for a list of available commands.\n\n");
     shell_run();
     
     // This should never be reached
