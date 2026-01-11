@@ -68,6 +68,9 @@ fs_node_t *finddir_fs(fs_node_t *node, char *name);
 fs_node_t *make_file(char *name, uint32_t flags, uint32_t size);
 fs_node_t *make_dir(char *name, uint32_t flags);
 
+// Initrd initialization
+fs_node_t *initrd_initialize(uint32_t location);
+
 // Initialization function
 void fs_initialize_vfs();
 

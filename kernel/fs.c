@@ -3,28 +3,13 @@
 #include "string.h"
 #include "shell.h"
 
-// Forward declarations for functions used before their definition
-void cmd_ls(int argc, char **argv);
-
 // Global root filesystem node
 extern fs_node_t *fs_root;
 
 // Initialize the filesystem
 void fs_initialize() {
-    // Initialize the VFS
-    fs_initialize_vfs();
-    
-    // Here you would initialize your actual filesystem
-    // For now, we'll create a simple root directory with a test file
-    // fs_root = make_dir("root", 0);
-    
-    // Add some test files
-    fs_node_t *test_file = make_file("test.txt", 0, 15);
-    // In a real implementation, you would add this to a directory
-    (void)test_file;  // Prevent unused variable warning
-    
-    // You would also initialize your actual filesystem here
-    // For example: fs_root = initrd_initialize(initrd_location);
+    // Mount the initial ramdisk as root
+    fs_root = initrd_initialize(0x20000);
 }
 
 // List directory contents
@@ -43,8 +28,7 @@ void list_directory(fs_node_t *node) {
     }
 }
 
-// Shell command to list directory
-// Shell command to list directory
+// Shell command to list directory contents
 void cmd_ls(int argc, char **argv) {
     (void)argc; // Unused for now
     (void)argv; // Unused for now

@@ -67,7 +67,7 @@ start:
 
     ; Load kernel from disk
     mov ah, 0x02        ; BIOS read sectors function
-    mov al, 64          ; Number of sectors to read (32KB)
+    mov al, 64          ; Number of sectors to read (kernel is 64 sectors)
     mov ch, 0           ; Cylinder 0
     mov cl, 2           ; Start from sector 2 (1-based)
     mov dh, 0           ; Head 0
@@ -76,10 +76,28 @@ start:
     mov es, bx
     mov bx, 0x8000
     int 0x13
+    jnc load_initrd     ; Continue if no error
+
+    mov si, msg_disk_error
+    call print_string
+    jmp $
+
+load_initrd:
+    ; Load initrd from disk
+    mov ah, 0x02        ; BIOS read sectors function
+    mov al, 1           ; Number of sectors to read
+    mov ch, 1           ; Cylinder 1
+    mov cl, 12          ; Sector 12
+    mov dh, 1           ; Head 1
+    mov dl, [boot_drive]; Boot drive
+    mov bx, 0x2000      ; ES:BX buffer address (ES=0x2000, BX=0x0000)
+    mov es, bx
+    mov bx, 0x0000
+    int 0x13
     jnc continue_boot   ; Continue if no error
 
     ; Print error message and halt if read failed
-    mov si, msg_disk_error
+    mov si, msg_initrd_error
     call print_string
     jmp $
 
@@ -100,6 +118,7 @@ boot_drive: db 0
 
 msg_booting: db "Booting from disk...", 0x0D, 0x0A, 0
 msg_disk_error: db "Disk read error!", 0x0D, 0x0A, 0
+msg_initrd_error: db "Initrd read error!", 0x0D, 0x0A, 0
 
 bits 32
 p_mode_start:

@@ -9,6 +9,10 @@ ASMFLAGS = -f elf32
 CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I./libc/include -I. -I./fs/include -std=gnu99 -nostdlib -nostdinc -fno-builtin
 LDFLAGS = -T linker.ld -melf_i386 -nostdlib
 
+# Host tools
+HOSTCC = gcc
+HOSTCFLAGS = -O2
+
 # Source files
 LIBC_SRCS = libc/string.c
 KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/shell.c kernel/idt.c kernel/pic.c kernel/fs.c kernel/memory.c $(LIBC_SRCS)
@@ -22,13 +26,14 @@ GUI_SRCS = gui/gui.c
 GUI_OBJS = $(GUI_SRCS:.c=.o)
 
 # Default target
-all: os.bin
+all: os.bin initrd.bin
 
 # Create final OS image
-os.bin: boot/boot.bin kernel.bin
-	dd if=/dev/zero of=$@ bs=512 count=65
+os.bin: boot/boot.bin kernel.bin initrd.bin
+	dd if=/dev/zero of=$@ bs=512 count=2880
 	dd if=boot/boot.bin of=$@ conv=notrunc
 	dd if=kernel.bin of=$@ bs=512 seek=1 conv=notrunc
+	dd if=initrd.bin of=$@ bs=512 seek=65 conv=notrunc
 
 # Bootloader
 boot/boot.bin: boot/boot.asm
@@ -65,6 +70,13 @@ gui/%.o: gui/%.c
 # Rule for compiling fs files
 fs/src/%.o: fs/src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# Host tools build
+tools/geninitrd: tools/geninitrd.c
+	$(HOSTCC) $(HOSTCFLAGS) -o $@ $<
+
+initrd.bin: tools/geninitrd hello.txt
+	./tools/geninitrd $@ hello.txt
 
 # Clean build artifacts
 clean:
