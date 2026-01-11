@@ -1,12 +1,12 @@
-#include "fs.h"
+#include "../include/fs.h"
 #include <string.h>
-#include "kernel/memory.h"  // Assuming you have a kernel heap allocator
+#include <kheap.h>  // Assuming you have a kernel heap allocator
 
 // The root of the filesystem
 fs_node_t *fs_root = 0;
 
 // Default file operations
-uint32_t read_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer) {
+static uint32_t fs_read(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer) {
     // Check if the node has a specific read function
     if (node->read != 0) {
         return node->read(node, offset, size, buffer);
@@ -14,7 +14,7 @@ uint32_t read_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffe
     return 0;
 }
 
-uint32_t write_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer) {
+static uint32_t fs_write(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer) {
     // Check if the node has a specific write function
     if (node->write != 0) {
         return node->write(node, offset, size, buffer);
@@ -22,21 +22,21 @@ uint32_t write_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buff
     return 0;
 }
 
-void open_fs(fs_node_t *node, uint8_t read, uint8_t write) {
+static void fs_open(fs_node_t *node, uint8_t read, uint8_t write) {
     // Call the node's open function if it exists
     if (node->open != 0) {
         node->open(node);
     }
 }
 
-void close_fs(fs_node_t *node) {
+static void fs_close(fs_node_t *node) {
     // Call the node's close function if it exists
     if (node->close != 0) {
         node->close(node);
     }
 }
 
-struct dirent *readdir_fs(fs_node_t *node, uint32_t index) {
+static struct dirent *fs_readdir(fs_node_t *node, uint32_t index) {
     // Check if the node is a directory and has a readdir function
     if ((node->flags & 0x7) == FS_DIRECTORY && node->readdir != 0) {
         return node->readdir(node, index);
@@ -44,7 +44,7 @@ struct dirent *readdir_fs(fs_node_t *node, uint32_t index) {
     return 0;
 }
 
-fs_node_t *finddir_fs(fs_node_t *node, char *name) {
+static fs_node_t *fs_finddir(fs_node_t *node, char *name) {
     // Check if the node is a directory and has a finddir function
     if ((node->flags & 0x7) == FS_DIRECTORY && node->finddir != 0) {
         return node->finddir(node, name);
@@ -108,15 +108,8 @@ fs_node_t *make_dir(char *name, uint32_t flags) {
     return node;
 }
 
-// Dummy readdir implementation for the root directory
-static struct dirent *root_readdir(fs_node_t *node, uint32_t index) {
-    (void)node;
-    (void)index;
-    return NULL;
-}
-
 // Initialize the filesystem
-void fs_initialize_vfs() {
+void fs_init() {
     // Create the root directory
     fs_root = make_dir("root", 0);
     
@@ -126,8 +119,8 @@ void fs_initialize_vfs() {
     }
     
     // Set up the root directory's function pointers
-    fs_root->readdir = root_readdir;
-    fs_root->finddir = finddir_fs;
+    fs_root->readdir = fs_readdir;
+    fs_root->finddir = fs_finddir;
     
     // Create some default directories
     fs_node_t *dev = make_dir("dev", 0);

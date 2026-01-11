@@ -9,26 +9,66 @@ extern fs_node_t *fs_root;
 // Forward declaration of initrd_initialize
 fs_node_t *initrd_initialize(uint32_t location);
 
-// Minimal directory entry array for the root directory
-#define MAX_ENTRIES 10
-static struct dirent dir_entries[MAX_ENTRIES];
-static uint32_t num_entries = 0;
+// Directory entry structure for our minimal filesystem
+typedef struct {
+    char name[128];
+    fs_node_t *node;
+} minfs_dirent_t;
 
-// Minimal readdir implementation for the root directory
-static struct dirent *minimal_readdir(fs_node_t *node, uint32_t index) {
-    (void)node; // Unused parameter
+// Directory structure for our minimal filesystem
+typedef struct {
+    minfs_dirent_t entries[10];
+    uint32_t num_entries;
+} minfs_dir_t;
+
+// Minimal filesystem data
+static minfs_dir_t root_dir = {0};
+static minfs_dir_t dev_dir = {0};
+static minfs_dir_t proc_dir = {0};
+
+// Add an entry to a directory
+static void minfs_add_entry(minfs_dir_t *dir, const char *name, fs_node_t *node) {
+    if (dir->num_entries >= 10) return;
     
-    // Special case: . and .. entries
+    strncpy(dir->entries[dir->num_entries].name, name, 127);
+    dir->entries[dir->num_entries].name[127] = '\0';
+    dir->entries[dir->num_entries].node = node;
+    dir->num_entries++;
+}
+
+// Union for type-punning between fs_node* and minfs_dir_t*
+typedef union {
+    struct fs_node *fs_node;
+    minfs_dir_t *dir;
+} fs_ptr_union_t;
+
+// Minimal readdir implementation
+static struct dirent *minimal_readdir(fs_node_t *node, uint32_t index) {
+    fs_ptr_union_t u;
+    u.fs_node = node->ptr;
+    minfs_dir_t *dir = u.dir;
+    static struct dirent dirent;
+    
+    if (!dir) return 0;
+    
+    // Special cases for . and ..
     if (index == 0) {
-        strcpy(dir_entries[0].name, ".");
-        dir_entries[0].ino = 0;
-        return &dir_entries[0];
+        strcpy(dirent.name, ".");
+        dirent.ino = 0;
+        return &dirent;
     } else if (index == 1) {
-        strcpy(dir_entries[1].name, "..");
-        dir_entries[1].ino = 0;
-        return &dir_entries[1];
-    } else if (index - 2 < num_entries) {
-        return &dir_entries[index - 2];
+        strcpy(dirent.name, "..");
+        dirent.ino = 0;
+        return &dirent;
+    }
+    
+    // Regular entries (offset by 2 for . and ..)
+    index -= 2;
+    if (index < dir->num_entries) {
+        strncpy(dirent.name, dir->entries[index].name, 127);
+        dirent.name[127] = '\0';
+        dirent.ino = index + 2; // Start after . and ..
+        return &dirent;
     }
     
     return 0; // No more entries
@@ -36,50 +76,47 @@ static struct dirent *minimal_readdir(fs_node_t *node, uint32_t index) {
 
 // Minimal finddir implementation
 static fs_node_t *minimal_finddir(fs_node_t *node, char *name) {
+    fs_ptr_union_t u;
+    u.fs_node = node->ptr;
+    minfs_dir_t *dir = u.dir;
+    
+    if (!dir) return 0;
+    
     // Check for . and ..
     if (strcmp(name, ".") == 0) {
         return node;
+    } else if (strcmp(name, "..") == 0) {
+        // For simplicity, just return the node itself as the parent
+        return node;
     }
     
-    // In the minimal implementation, we'll just check if the name exists in our entries
-    for (uint32_t i = 0; i < num_entries; i++) {
-        if (strcmp(dir_entries[i].name, name) == 0) {
-            // In a real implementation, we would return the actual node
-            // For now, we'll just return the node itself as a placeholder
-            return node;
+    // Check other entries
+    for (uint32_t i = 0; i < dir->num_entries; i++) {
+        if (strcmp(dir->entries[i].name, name) == 0) {
+            return dir->entries[i].node;
         }
     }
     
     return 0; // Not found
 }
 
-// Add an entry to the root directory
-static void add_dir_entry(const char *name) {
-    if (num_entries < MAX_ENTRIES) {
-        strncpy(dir_entries[num_entries].name, name, 127);
-        dir_entries[num_entries].name[127] = '\0';
-        dir_entries[num_entries].ino = num_entries + 2; // Start after . and ..
-        num_entries++;
-    }
-}
-
 // Create a minimal filesystem with basic directories
 static fs_node_t *create_minimal_fs() {
-    // Reset entries
-    num_entries = 0;
-    
     // Create root directory
-    fs_node_t *root = make_dir("root", 0);
+    fs_node_t *root = make_dir("/", 0);
     if (!root) {
         vga_put_string("Failed to create root directory\n");
         return 0;
     }
     
-    // Set up root directory functions
+    // Set up root directory
+    fs_ptr_union_t u;
+    u.dir = &root_dir;
+    root->ptr = u.fs_node;
     root->readdir = minimal_readdir;
     root->finddir = minimal_finddir;
     
-    // Create and add some default directories
+    // Create default directories
     fs_node_t *dev = make_dir("dev", 0);
     fs_node_t *proc = make_dir("proc", 0);
     
@@ -88,16 +125,28 @@ static fs_node_t *create_minimal_fs() {
         return 0;
     }
     
-    // Set up directory functions for subdirectories
+    // Set up dev directory
+    u.dir = &dev_dir;
+    dev->ptr = u.fs_node;
     dev->readdir = minimal_readdir;
     dev->finddir = minimal_finddir;
     
+    // Set up proc directory
+    u.dir = &proc_dir;
+    proc->ptr = u.fs_node;
     proc->readdir = minimal_readdir;
     proc->finddir = minimal_finddir;
     
     // Add entries to the root directory
-    add_dir_entry("dev");
-    add_dir_entry("proc");
+    minfs_add_entry(&root_dir, "dev", dev);
+    minfs_add_entry(&root_dir, "proc", proc);
+    
+    // Add . and .. to dev and proc
+    minfs_add_entry(&dev_dir, ".", dev);
+    minfs_add_entry(&dev_dir, "..", root);
+    
+    minfs_add_entry(&proc_dir, ".", proc);
+    minfs_add_entry(&proc_dir, "..", root);
     
     return root;
 }
