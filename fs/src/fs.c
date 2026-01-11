@@ -1,6 +1,6 @@
 #include "../include/fs.h"
 #include <string.h>
-#include <kheap.h>  // Assuming you have a kernel heap allocator
+#include "../../kernel/memory.h"  // Memory management functions (kmalloc, kfree)
 
 // The root of the filesystem
 fs_node_t *fs_root = 0;

@@ -6,7 +6,7 @@ OBJCOPY = x86_64-elf-objcopy
 
 # Flags
 ASMFLAGS = -f elf32
-CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I./libc/include -I. -I./fs/include -std=gnu99 -nostdlib -nostdinc -fno-builtin
+CFLAGS = -ffreestanding -m32 -g -fno-pie -Wall -Wextra -I./libc/include -I. -I./fs/include -I./kernel -std=gnu99 -nostdlib -nostdinc -fno-builtin
 LDFLAGS = -T linker.ld -melf_i386 -nostdlib
 
 # Host tools
