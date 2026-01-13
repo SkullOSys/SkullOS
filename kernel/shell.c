@@ -1,8 +1,9 @@
 #include "shell.h"
-#include "vga.h"
+#include "terminal.h"
 #include "kernel.h"
 #include "../drivers/keyboard/keyboard.h"
 #include "libc/include/string.h"
+#include "vga_manager.h"
 
 #define MAX_COMMAND_LENGTH 80
 
@@ -31,29 +32,30 @@ static void cmd_help(int argc, char **argv) {
     (void)argc; // Unused
     (void)argv; // Unused
     
-    vga_put_string("\nAvailable commands:\n");
+    terminal_puts("\nAvailable commands:\n");
     
     command_t* cmd = command_list;
     while (cmd) {
-        vga_put_string("  ");
-        vga_put_string(cmd->name);
+        terminal_puts("  ");
+        terminal_puts(cmd->name);
         // Pad to align descriptions
         int padding = 12 - strlen(cmd->name);
         for (int i = 0; i < padding; i++) {
-            vga_put_string(" ");
+            terminal_puts(" ");
         }
-        vga_put_string("- ");
-        vga_put_string(cmd->description);
-        vga_put_string("\n");
+        terminal_puts("- ");
+        terminal_puts(cmd->description);
+        terminal_puts("\n");
         cmd = cmd->next;
     }
-    vga_put_string("\n");
+    terminal_puts("\n");
 }
 
 static void cmd_clear(int argc, char **argv) {
     (void)argc; // Unused
     (void)argv; // Unused
-vga_clear_screen();
+    vga_manager_set_context(false);
+    vga_manager_clear();
 }
 
 // Register a new command
@@ -106,7 +108,7 @@ void shell_init(void) {
 }
 
 void shell_print_prompt(void) {
-    vga_put_string("skullos> ");
+    terminal_puts("skullos> ");
 }
 
 // Process a command
@@ -125,7 +127,7 @@ void shell_process_command(const char* command) {
     }
     
     // Echo the command
-    vga_put_string("\n");
+    terminal_puts("\n");
     
     // Look for the command
     command_t* cmd = command_list;
@@ -138,9 +140,9 @@ void shell_process_command(const char* command) {
     }
     
     // Command not found
-    vga_put_string("Command not found: ");
-    vga_put_string(argv[0]);
-    vga_put_string("\nType 'help' for a list of available commands.\n");
+    terminal_puts("Command not found: ");
+    terminal_puts(argv[0]);
+    terminal_puts("\nType 'help' for a list of available commands.\n");
 }
 
 void shell_run(void) {
@@ -153,7 +155,7 @@ void shell_run(void) {
         // Handle special keys
         if (c == '\r' || c == '\n') {
             // Execute command
-            vga_put_string("\n");
+            terminal_puts("\n");
             command_buffer[command_length] = '\0';
             shell_process_command(command_buffer);
             
@@ -166,12 +168,12 @@ void shell_run(void) {
                 command_length--;
                 command_buffer[command_length] = '\0';
                 // Move cursor back, print space, move cursor back again
-                vga_put_string("\b \b");
+                terminal_puts("\b \b");
             }
         } else if (command_length < MAX_COMMAND_LENGTH - 1 && c >= 32 && c <= 126) {
             // Printable character
             command_buffer[command_length++] = c;
-            vga_put_char(c);
+            terminal_putchar(c);
         }
     }
 }

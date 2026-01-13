@@ -1,5 +1,5 @@
 #include "fs.h"
-#include "vga.h"
+#include "terminal.h"
 #include "string.h"
 #include "shell.h"
 
@@ -105,7 +105,7 @@ static fs_node_t *create_minimal_fs() {
     // Create root directory
     fs_node_t *root = make_dir("/", 0);
     if (!root) {
-        vga_put_string("Failed to create root directory\n");
+        terminal_puts("Failed to create root directory\n");
         return 0;
     }
     
@@ -121,7 +121,7 @@ static fs_node_t *create_minimal_fs() {
     fs_node_t *proc = make_dir("proc", 0);
     
     if (!dev || !proc) {
-        vga_put_string("Failed to create default directories\n");
+        terminal_puts("Failed to create default directories\n");
         return 0;
     }
     
@@ -158,12 +158,12 @@ void fs_initialize() {
     
     // If initrd initialization failed, create a minimal filesystem
     if (!fs_root) {
-        vga_put_string("Failed to initialize initrd, falling back to minimal filesystem\n");
+        terminal_puts("Failed to initialize initrd, falling back to minimal filesystem\n");
         fs_root = create_minimal_fs();
     }
     
     if (!fs_root) {
-        vga_put_string("FATAL: Failed to initialize filesystem\n");
+        terminal_puts("FATAL: Failed to initialize filesystem\n");
         // We can't continue without a filesystem
         while (1) { asm volatile ("hlt"); }
     }
@@ -172,40 +172,40 @@ void fs_initialize() {
 // List directory contents
 void list_directory(fs_node_t *node) {
     if (!node) {
-        vga_put_string("Error: Null directory node\n");
+        terminal_puts("Error: Null directory node\n");
         return;
     }
     
     if ((node->flags & 0x7) != FS_DIRECTORY) {
-        vga_put_string("Error: Not a directory\n");
+        terminal_puts("Error: Not a directory\n");
         return;
     }
     
     if (!node->readdir) {
-        vga_put_string("Error: Directory cannot be read (no readdir function)\n");
+        terminal_puts("Error: Directory cannot be read (no readdir function)\n");
         return;
     }
     
-    vga_put_string("Directory listing for ");
-    vga_put_string(node->name);
-    vga_put_string(":\n");
+    terminal_puts("Directory listing for ");
+    terminal_puts(node->name);
+    terminal_puts(":\n");
     
     uint32_t index = 0;
     struct dirent *dir = 0;
     
     while ((dir = node->readdir(node, index++)) != 0) {
-        vga_put_string("  ");
-        vga_put_string(dir->name);
+        terminal_puts("  ");
+        terminal_puts(dir->name);
         
         // Check if this entry is a directory
         if (node->finddir) {
             fs_node_t *entry = node->finddir(node, dir->name);
             if (entry && (entry->flags & 0x7) == FS_DIRECTORY) {
-                vga_put_string("/");
+                terminal_puts("/");
             }
         }
         
-        vga_put_string("\n");
+        terminal_puts("\n");
     }
 }
 
@@ -215,11 +215,11 @@ void cmd_ls(int argc, char **argv) {
     (void)argv; // Unused for now
     
     if (!fs_root) {
-        vga_put_string("Filesystem not initialized\n");
+        terminal_puts("Filesystem not initialized\n");
         return;
     }
     
-    vga_put_string("Listing root directory:\n");
+    terminal_puts("Listing root directory:\n");
     list_directory(fs_root);
 }
 
