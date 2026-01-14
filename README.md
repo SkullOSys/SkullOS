@@ -1,6 +1,8 @@
-# Minimalistisches Betriebssystem
+# SkullOS
 
-Dieses Projekt enthält ein minimalistisches Betriebssystem, das in C und Assembly geschrieben ist und in QEMU ausgeführt werden kann.
+## Not Just Another Unix Clone
+
+This project contains a minimalistic operatingsystem, thats written in C and Assembly. It can be executeed using QEMU.
 
 ## Abhängigkeiten
 
