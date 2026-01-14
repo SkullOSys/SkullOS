@@ -14,6 +14,7 @@ void timer_handler(void) {
     
     // Call the GUI time drawing function
     gui_draw_time();
+    gui_draw_memory();
 }
 
 // Initialize the timer

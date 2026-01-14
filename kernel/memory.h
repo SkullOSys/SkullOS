@@ -10,4 +10,7 @@ void memory_init(void);
 void* kmalloc(size_t size);
 void kfree(void* ptr);
 
+// Get the total free memory in bytes
+size_t get_free_memory(void);
+
 #endif // KERNEL_MEMORY_H

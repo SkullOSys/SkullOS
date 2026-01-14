@@ -72,3 +72,19 @@ void kfree(void *ptr) {
         block->next = block->next->next;
     }
 }
+
+// Get the total free memory in bytes
+size_t get_free_memory() {
+    size_t free_mem = 0;
+    mem_block_t *current = free_list;
+    
+    while (current) {
+        if (current->free) {
+            free_mem += current->size;
+        }
+        current = current->next;
+    }
+    
+    return free_mem;
+}
+

@@ -5,4 +5,7 @@
 
 void gui_init();
 
+void gui_draw_time();
+void gui_draw_memory();
+
 #endif

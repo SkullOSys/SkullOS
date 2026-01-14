@@ -3,6 +3,23 @@
 #include "../drivers/rtc/rtc.h"
 #include "../kernel/util.h"
 #include <string.h>
+#include "../kernel/memory.h"
+
+void gui_draw_memory() {
+    size_t free_mem = get_free_memory() / 1024;
+    char mem_str[16];
+    char mem_val[6];
+
+    itoa(free_mem, mem_val, 10);
+    mem_str[0] = '\0';
+    strcat(mem_str, "Mem: ");
+    strcat(mem_str, mem_val);
+    strcat(mem_str, " KB");
+
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_cursor_pos(0, 2);
+    vga_manager_puts(mem_str);
+}
 
 void gui_draw_time() {
     rtc_time_t time;
@@ -33,8 +50,8 @@ void gui_draw_time() {
     }
     strcat(time_str, sec_str);
 
-    vga_manager_set_color(VGA_COLOR_YELLOW, VGA_COLOR_BLUE);
-    vga_manager_fullscreen_set_cursor_pos(VGA_WIDTH - 8, 0);
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_cursor_pos(0, 1);
     vga_manager_puts(time_str);
 }
 
@@ -42,5 +59,9 @@ void gui_init() {
     vga_manager_set_context(true);
     vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     vga_manager_clear();
+    vga_manager_fullscreen_set_cursor_pos(0, 0);
+    vga_manager_puts(" \n");
     gui_draw_time();
+    vga_manager_puts(" \n");
+    gui_draw_memory();
 }
