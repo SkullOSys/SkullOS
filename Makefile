@@ -19,7 +19,7 @@ KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/vga_manager.c ke
 FS_SRCS = fs/src/fs.c fs/src/initrd.c
 FS_OBJS = $(FS_SRCS:.c=.o)
 ASM_SRCS = kernel/interrupts.asm
-DRIVER_SRCS = drivers/keyboard/keyboard.c
+DRIVER_SRCS = drivers/keyboard/keyboard.c drivers/rtc/rtc.c
 KERNEL_OBJS = $(KERNEL_SRCS:.c=.o) $(DRIVER_SRCS:.c=.o) $(ASM_SRCS:.asm=.o)
 
 GUI_SRCS = gui/gui.c

@@ -80,8 +80,14 @@ int strncmp(const char* s1, const char* s2, size_t n) {
         s2++;
         n--;
     }
-    if (n == 0) {
-        return 0;
-    }
     return *(const unsigned char*)s1 - *(const unsigned char*)s2;
+}
+
+char* strcat(char* dest, const char* src) {
+    char* d = dest;
+    while (*d) {
+        d++;
+    }
+    while ((*d++ = *src++));
+    return dest;
 }

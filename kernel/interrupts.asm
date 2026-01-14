@@ -22,9 +22,5 @@ keyboard_handler_asm:
     ; Restore all general-purpose registers
     popad
     
-    ; Acknowledge the interrupt to the PIC
-    mov al, 0x20        ; EOI (End Of Interrupt) command
-    out 0x20, al        ; Send EOI to master PIC
-    
     ; Return from interrupt
     iret

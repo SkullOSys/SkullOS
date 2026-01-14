@@ -45,6 +45,7 @@ void kernel_main(void) {
     vga_manager_puts("Initializing system components...\n");
     gui_init();
     vga_manager_set_context(true);
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     const char* msg = "Skull GUI Initialized";
     int msg_len = strlen(msg);
     int x = (40 - msg_len) / 2;
