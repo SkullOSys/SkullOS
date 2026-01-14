@@ -34,7 +34,7 @@ static void format_time_str(char* str, uint8_t hour, uint8_t minute, uint8_t sec
 
 // Draw the title bar
 static void gui_draw_title_bar() {
-    vga_manager_fullscreen_set_color(VGA_COLOR_BLACK, VGA_COLOR_CYAN);
+    vga_manager_fullscreen_set_color(VGA_COLOR_BLACK, VGA_COLOR_BLUE);
     for (int x = 40; x < 80; x++) {
         vga_manager_fullscreen_set_cursor_pos(x, 0);
         vga_manager_fullscreen_putchar(' ');
