@@ -91,3 +91,16 @@ char* strcat(char* dest, const char* src) {
     while ((*d++ = *src++));
     return dest;
 }
+
+char* strncat(char* dest, const char* src, size_t n) {
+    char* d = dest;
+    while (*d) {
+        d++;
+    }
+    size_t i = 0;
+    while (i < n && src[i] != '\0') {
+        *d++ = src[i++];
+    }
+    *d = '\0';
+    return dest;
+}

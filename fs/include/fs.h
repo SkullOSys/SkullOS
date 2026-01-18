@@ -71,6 +71,17 @@ fs_node_t *make_dir(char *name, uint32_t flags);
 // Initrd initialization
 fs_node_t *initrd_initialize(uint32_t location);
 
+// SkullFS functions
+fs_node_t *skullfs_init(void);
+fs_node_t *skullfs_create_file(fs_node_t *parent_dir, const char *name);
+fs_node_t *skullfs_create_dir(fs_node_t *parent_dir, const char *name);
+int skullfs_delete(fs_node_t *parent_dir, const char *name);
+
+// Path resolution
+fs_node_t *resolve_path(const char *path);
+fs_node_t *get_parent_dir(const char *path);
+const char *get_filename(const char *path);
+
 // Initialization function
 void fs_initialize_vfs();
 

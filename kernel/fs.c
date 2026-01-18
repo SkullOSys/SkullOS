@@ -2,12 +2,20 @@
 #include "terminal.h"
 #include "string.h"
 #include "shell.h"
+#include "util.h"
 
 // Global root filesystem node
 extern fs_node_t *fs_root;
 
-// Forward declaration of initrd_initialize
+// Forward declarations
 fs_node_t *initrd_initialize(uint32_t location);
+fs_node_t *skullfs_init(void);
+fs_node_t *skullfs_create_file(fs_node_t *parent_dir, const char *name);
+fs_node_t *skullfs_create_dir(fs_node_t *parent_dir, const char *name);
+int skullfs_delete(fs_node_t *parent_dir, const char *name);
+fs_node_t *resolve_path(const char *path);
+fs_node_t *get_parent_dir(const char *path);
+const char *get_filename(const char *path);
 
 // Directory entry structure for our minimal filesystem
 typedef struct {
@@ -156,9 +164,15 @@ void fs_initialize() {
     // Try to mount the initial ramdisk as root
     fs_root = initrd_initialize(0x20000);
     
-    // If initrd initialization failed, create a minimal filesystem
+    // If initrd initialization failed, use SkullFS
     if (!fs_root) {
-        terminal_puts("Failed to initialize initrd, falling back to minimal filesystem\n");
+        terminal_puts("Initializing SkullFS...\n");
+        fs_root = skullfs_init();
+    }
+    
+    // If SkullFS initialization failed, fall back to minimal filesystem
+    if (!fs_root) {
+        terminal_puts("Failed to initialize SkullFS, falling back to minimal filesystem\n");
         fs_root = create_minimal_fs();
     }
     
@@ -211,20 +225,201 @@ void list_directory(fs_node_t *node) {
 
 // Shell command to list directory contents
 void cmd_ls(int argc, char **argv) {
-    (void)argc; // Unused for now
-    (void)argv; // Unused for now
+    fs_node_t *dir = fs_root;
+    
+    if (argc > 1) {
+        dir = resolve_path(argv[1]);
+        if (!dir) {
+            terminal_puts("\nDirectory not found: ");
+            terminal_puts(argv[1]);
+            terminal_puts("\n");
+            return;
+        }
+    }
     
     if (!fs_root) {
         terminal_puts("Filesystem not initialized\n");
         return;
     }
     
-    terminal_puts("Listing root directory:\n");
-    list_directory(fs_root);
+    if ((dir->flags & 0x7) != FS_DIRECTORY) {
+        terminal_puts("\nNot a directory: ");
+        if (argc > 1) terminal_puts(argv[1]);
+        terminal_puts("\n");
+        return;
+    }
+    
+    list_directory(dir);
+}
+
+// Shell command to create a directory
+void cmd_mkdir(int argc, char **argv) {
+    if (argc < 2) {
+        terminal_puts("\nUsage: mkdir <directory>\n");
+        return;
+    }
+    
+    if (!fs_root) {
+        terminal_puts("\nFilesystem not initialized\n");
+        return;
+    }
+    
+    fs_node_t *parent = get_parent_dir(argv[1]);
+    const char *name = get_filename(argv[1]);
+    
+    if (!parent) {
+        terminal_puts("\nParent directory not found\n");
+        return;
+    }
+    
+    if ((parent->flags & 0x7) != FS_DIRECTORY) {
+        terminal_puts("\nParent is not a directory\n");
+        return;
+    }
+    
+    fs_node_t *new_dir = skullfs_create_dir(parent, name);
+    if (new_dir) {
+        terminal_puts("\nDirectory created: ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+    } else {
+        terminal_puts("\nFailed to create directory (may already exist)\n");
+    }
+}
+
+// Shell command to create a file
+void cmd_touch(int argc, char **argv) {
+    if (argc < 2) {
+        terminal_puts("\nUsage: touch <filename>\n");
+        return;
+    }
+    
+    if (!fs_root) {
+        terminal_puts("\nFilesystem not initialized\n");
+        return;
+    }
+    
+    fs_node_t *parent = get_parent_dir(argv[1]);
+    const char *name = get_filename(argv[1]);
+    
+    if (!parent) {
+        terminal_puts("\nParent directory not found\n");
+        return;
+    }
+    
+    if ((parent->flags & 0x7) != FS_DIRECTORY) {
+        terminal_puts("\nParent is not a directory\n");
+        return;
+    }
+    
+    fs_node_t *file = skullfs_create_file(parent, name);
+    if (file) {
+        terminal_puts("\nFile created: ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+    } else {
+        terminal_puts("\nFailed to create file (may already exist)\n");
+    }
+}
+
+// Shell command to delete a file or directory
+void cmd_rm(int argc, char **argv) {
+    if (argc < 2) {
+        terminal_puts("\nUsage: rm <file_or_directory>\n");
+        return;
+    }
+    
+    if (!fs_root) {
+        terminal_puts("\nFilesystem not initialized\n");
+        return;
+    }
+    
+    fs_node_t *parent = get_parent_dir(argv[1]);
+    const char *name = get_filename(argv[1]);
+    
+    if (!parent) {
+        terminal_puts("\nParent directory not found\n");
+        return;
+    }
+    
+    if ((parent->flags & 0x7) != FS_DIRECTORY) {
+        terminal_puts("\nParent is not a directory\n");
+        return;
+    }
+    
+    if (skullfs_delete(parent, name)) {
+        terminal_puts("\nDeleted: ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+    } else {
+        terminal_puts("\nFailed to delete (file not found or directory not empty)\n");
+    }
+}
+
+// Shell command to write to a file
+void cmd_write(int argc, char **argv) {
+    if (argc < 3) {
+        terminal_puts("\nUsage: write <filename> <text>\n");
+        return;
+    }
+    
+    if (!fs_root) {
+        terminal_puts("\nFilesystem not initialized\n");
+        return;
+    }
+    
+    fs_node_t *file = resolve_path(argv[1]);
+    if (!file) {
+        // File doesn't exist, try to create it
+        fs_node_t *parent = get_parent_dir(argv[1]);
+        const char *name = get_filename(argv[1]);
+        
+        if (!parent) {
+            terminal_puts("\nParent directory not found\n");
+            return;
+        }
+        
+        file = skullfs_create_file(parent, name);
+        if (!file) {
+            terminal_puts("\nFailed to create file\n");
+            return;
+        }
+    }
+    
+    if ((file->flags & 0x7) != FS_FILE) {
+        terminal_puts("\nNot a file\n");
+        return;
+    }
+    
+    // Concatenate all arguments after filename
+    char text[256] = {0};
+    for (int i = 2; i < argc; i++) {
+        if (i > 2) {
+            strcat(text, " ");
+        }
+        strncat(text, argv[i], 255 - strlen(text));
+    }
+    
+    uint32_t len = strlen(text);
+    if (write_fs(file, 0, len, (uint8_t*)text) == len) {
+        terminal_puts("\nWritten ");
+        char len_str[10];
+        itoa(len, len_str, 10);
+        terminal_puts(len_str);
+        terminal_puts(" bytes to ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+    } else {
+        terminal_puts("\nFailed to write to file\n");
+    }
 }
 
 // Initialize filesystem commands
 void fs_init_commands() {
-    // Register the 'ls' command
+    // Register filesystem commands
     shell_register_command("ls", "List directory contents", cmd_ls);
+    shell_register_command("mkdir", "Create a directory", cmd_mkdir);
+    shell_register_command("touch", "Create an empty file", cmd_touch);
+    shell_register_command("rm", "Delete a file or directory", cmd_rm);
+    shell_register_command("write", "Write text to a file", cmd_write);
 }
