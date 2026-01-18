@@ -2,8 +2,13 @@
 #include "terminal.h"
 #include "kernel.h"
 #include "../drivers/keyboard/keyboard.h"
+#include "../drivers/rtc/rtc.h"
 #include "libc/include/string.h"
 #include "vga_manager.h"
+#include "timer.h"
+#include "cpu.h"
+#include "memory.h"
+#include "util.h"
 
 #define MAX_COMMAND_LENGTH 80
 
@@ -24,6 +29,7 @@ static command_t* command_list = NULL;
 // Forward declarations of command handlers
 static void cmd_help(int argc, char **argv);
 static void cmd_clear(int argc, char **argv);
+static void cmd_info(int argc, char **argv);
 
 
 
@@ -56,6 +62,76 @@ static void cmd_clear(int argc, char **argv) {
     (void)argv; // Unused
     vga_manager_set_context(false);
     vga_manager_clear();
+}
+
+static void cmd_info(int argc, char **argv) {
+    (void)argc; // Unused
+    (void)argv; // Unused
+    
+    terminal_puts("\n=== SkullOS System Information ===\n\n");
+    
+    // CPU Info
+    cpu_info_t* cpu = cpu_get_info();
+    terminal_puts("CPU Vendor: ");
+    terminal_puts(cpu->vendor);
+    terminal_puts("\n");
+    
+    // Memory Info
+    size_t free_mem = get_free_memory() / 1024;
+    char mem_str[32];
+    char mem_val[10];
+    itoa(free_mem, mem_val, 10);
+    mem_str[0] = '\0';
+    strcat(mem_str, "Free Memory: ");
+    strcat(mem_str, mem_val);
+    strcat(mem_str, " KB\n");
+    terminal_puts(mem_str);
+    
+    // Uptime
+    uint32_t uptime = timer_get_uptime_seconds();
+    uint32_t hours = uptime / 3600;
+    uint32_t minutes = (uptime % 3600) / 60;
+    uint32_t seconds = uptime % 60;
+    char uptime_str[32];
+    char hour_str[10], min_str[10], sec_str[10];
+    itoa(hours, hour_str, 10);
+    itoa(minutes, min_str, 10);
+    itoa(seconds, sec_str, 10);
+    uptime_str[0] = '\0';
+    strcat(uptime_str, "Uptime: ");
+    if (hours < 10) strcat(uptime_str, "0");
+    strcat(uptime_str, hour_str);
+    strcat(uptime_str, ":");
+    if (minutes < 10) strcat(uptime_str, "0");
+    strcat(uptime_str, min_str);
+    strcat(uptime_str, ":");
+    if (seconds < 10) strcat(uptime_str, "0");
+    strcat(uptime_str, sec_str);
+    strcat(uptime_str, "\n");
+    terminal_puts(uptime_str);
+    
+    // Time
+    rtc_time_t time;
+    rtc_get_time(&time);
+    char time_str[16];
+    char rtc_hour_str[3], rtc_min_str[3], rtc_sec_str[3];
+    itoa(time.hour, rtc_hour_str, 10);
+    itoa(time.minute, rtc_min_str, 10);
+    itoa(time.second, rtc_sec_str, 10);
+    time_str[0] = '\0';
+    if (time.hour < 10) strcat(time_str, "0");
+    strcat(time_str, rtc_hour_str);
+    strcat(time_str, ":");
+    if (time.minute < 10) strcat(time_str, "0");
+    strcat(time_str, rtc_min_str);
+    strcat(time_str, ":");
+    if (time.second < 10) strcat(time_str, "0");
+    strcat(time_str, rtc_sec_str);
+    strcat(time_str, "\n");
+    terminal_puts("Current Time: ");
+    terminal_puts(time_str);
+    
+    terminal_puts("\n");
 }
 
 // Register a new command
@@ -105,6 +181,7 @@ void shell_init(void) {
     // Register built-in commands
     shell_register_command("help", "Show this help message", cmd_help);
     shell_register_command("clear", "Clear the screen", cmd_clear);
+    shell_register_command("info", "Show system information", cmd_info);
 }
 
 void shell_print_prompt(void) {

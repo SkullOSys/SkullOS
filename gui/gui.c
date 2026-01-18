@@ -2,6 +2,8 @@
 #include "../kernel/vga_manager.h"
 #include "../drivers/rtc/rtc.h"
 #include "../kernel/util.h"
+#include "../kernel/timer.h"
+#include "../kernel/cpu.h"
 #include <string.h>
 #include "../kernel/memory.h"
 
@@ -80,6 +82,74 @@ void gui_draw_memory() {
     vga_manager_fullscreen_puts(mem_str);
 }
 
+void gui_draw_uptime() {
+    uint32_t uptime = timer_get_uptime_seconds();
+    uint32_t hours = uptime / 3600;
+    uint32_t minutes = (uptime % 3600) / 60;
+    uint32_t seconds = uptime % 60;
+    
+    char uptime_str[32];
+    char hour_str[10], min_str[10], sec_str[10];
+    
+    itoa(hours, hour_str, 10);
+    itoa(minutes, min_str, 10);
+    itoa(seconds, sec_str, 10);
+    
+    uptime_str[0] = '\0';
+    strcat(uptime_str, "Uptime: ");
+    if (hours < 10) strcat(uptime_str, "0");
+    strcat(uptime_str, hour_str);
+    strcat(uptime_str, ":");
+    if (minutes < 10) strcat(uptime_str, "0");
+    strcat(uptime_str, min_str);
+    strcat(uptime_str, ":");
+    if (seconds < 10) strcat(uptime_str, "0");
+    strcat(uptime_str, sec_str);
+    
+    // Clear the line first
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    for (int x = 40; x < 80; x++) {
+        vga_manager_fullscreen_set_cursor_pos(x, 7);
+        vga_manager_fullscreen_putchar(' ');
+    }
+    
+    // Draw uptime info
+    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_cursor_pos(41, 7);
+    vga_manager_fullscreen_puts(uptime_str);
+}
+
+void gui_draw_cpu_info() {
+    cpu_info_t* cpu = cpu_get_info();
+    char cpu_str[48];
+    
+    cpu_str[0] = '\0';
+    strcat(cpu_str, "CPU: ");
+    
+    // Truncate vendor string if too long
+    char vendor_display[20];
+    int vendor_len = strlen(cpu->vendor);
+    if (vendor_len > 15) {
+        strncpy(vendor_display, cpu->vendor, 15);
+        vendor_display[15] = '\0';
+    } else {
+        strcpy(vendor_display, cpu->vendor);
+    }
+    strcat(cpu_str, vendor_display);
+    
+    // Clear the line first
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    for (int x = 40; x < 80; x++) {
+        vga_manager_fullscreen_set_cursor_pos(x, 9);
+        vga_manager_fullscreen_putchar(' ');
+    }
+    
+    // Draw CPU info
+    vga_manager_fullscreen_set_color(VGA_COLOR_YELLOW, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_cursor_pos(41, 9);
+    vga_manager_fullscreen_puts(cpu_str);
+}
+
 void gui_draw_time() {
     rtc_time_t time;
     rtc_get_time(&time);
@@ -115,6 +185,12 @@ void gui_init() {
     // Draw separator before memory
     gui_draw_hline(4);
     
+    // Draw separator before uptime
+    gui_draw_hline(6);
+    
+    // Draw separator before CPU info
+    gui_draw_hline(8);
+    
     // Draw separator at bottom
     gui_draw_hline(24);
     
@@ -123,12 +199,14 @@ void gui_init() {
     vga_manager_fullscreen_set_cursor_pos(41, 2);
     vga_manager_fullscreen_puts("System Status");
     
-    // Initial draw of time and memory
+    // Initial draw of time, memory, uptime, and CPU info
     gui_draw_time();
     gui_draw_memory();
+    gui_draw_uptime();
+    gui_draw_cpu_info();
     
     // Draw footer
     vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE);
     vga_manager_fullscreen_set_cursor_pos(41, 23);
-    vga_manager_fullscreen_puts("v0.1.0");
+    vga_manager_fullscreen_puts("SkullOS v0.1.0");
 }

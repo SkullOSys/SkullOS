@@ -15,7 +15,7 @@ HOSTCFLAGS = -O2
 
 # Source files
 LIBC_SRCS = libc/string.c
-KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/vga_manager.c kernel/shell.c kernel/idt.c kernel/pic.c kernel/fs.c kernel/memory.c $(LIBC_SRCS)
+KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/vga_manager.c kernel/shell.c kernel/idt.c kernel/pic.c kernel/fs.c kernel/memory.c kernel/timer.c kernel/cpu.c $(LIBC_SRCS)
 FS_SRCS = fs/src/fs.c fs/src/initrd.c
 FS_OBJS = $(FS_SRCS:.c=.o)
 ASM_SRCS = kernel/interrupts.asm

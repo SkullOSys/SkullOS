@@ -7,5 +7,7 @@ void gui_init();
 
 void gui_draw_time();
 void gui_draw_memory();
+void gui_draw_uptime();
+void gui_draw_cpu_info();
 
 #endif

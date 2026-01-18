@@ -7,6 +7,8 @@
 #include "../drivers/keyboard/keyboard.h"
 #include "fs.h"
 #include "memory.h"
+#include "timer.h"
+#include "cpu.h"
 
 // Kernel entry point
 __attribute__((section(".text.entry")))
@@ -60,6 +62,14 @@ void kernel_main(void) {
     outb(0x3D4, 0x0A);
     outb(0x3D5, 0x20);
     
+    // Initialize CPU detection
+    vga_manager_puts("Detecting CPU...\n");
+    cpu_init();
+    cpu_info_t* cpu = cpu_get_info();
+    vga_manager_puts("CPU Vendor: ");
+    vga_manager_puts(cpu->vendor);
+    vga_manager_puts("\n");
+    
     // Initialize memory manager
     vga_manager_puts("Initializing memory manager...\n");
     memory_init();
@@ -70,6 +80,9 @@ void kernel_main(void) {
     
     vga_manager_puts("Initializing keyboard...\n");
     keyboard_install();
+    
+    vga_manager_puts("Initializing timer...\n");
+    timer_init();
     
     // Enable interrupts
     asm volatile ("sti");

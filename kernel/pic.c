@@ -28,8 +28,8 @@ void pic_init(void) {
     outb(PIC1_DATA, pic1_mask);
     outb(PIC2_DATA, pic2_mask);
     
-    // Disable all interrupts except IRQ1 (keyboard)
-    outb(PIC1_DATA, 0xFD);  // 1111 1101 - Enable only IRQ1 (keyboard)
+    // Enable IRQ0 (timer) and IRQ1 (keyboard)
+    outb(PIC1_DATA, 0xFC);  // 1111 1100 - Enable IRQ0 (timer) and IRQ1 (keyboard)
     outb(PIC2_DATA, 0xFF);  // 1111 1111 - Disable all slave PIC interrupts
 }
 
