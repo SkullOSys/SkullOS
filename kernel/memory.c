@@ -88,3 +88,23 @@ size_t get_free_memory() {
     return free_mem;
 }
 
+// Get the total memory pool size in bytes
+size_t get_total_memory() {
+    return HEAP_SIZE;
+}
+
+// Get the used memory in bytes
+size_t get_used_memory() {
+    size_t used_mem = 0;
+    mem_block_t *current = free_list;
+    
+    while (current) {
+        if (!current->free) {
+            used_mem += current->size;
+        }
+        current = current->next;
+    }
+    
+    return used_mem;
+}
+

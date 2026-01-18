@@ -13,4 +13,10 @@ void kfree(void* ptr);
 // Get the total free memory in bytes
 size_t get_free_memory(void);
 
+// Get the total memory pool size in bytes
+size_t get_total_memory(void);
+
+// Get the used memory in bytes
+size_t get_used_memory(void);
+
 #endif // KERNEL_MEMORY_H

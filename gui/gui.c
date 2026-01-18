@@ -60,14 +60,22 @@ static void gui_draw_hline(int y) {
 
 void gui_draw_memory() {
     size_t free_mem = get_free_memory() / 1024;
-    char mem_str[32];
-    char mem_val[10];
+    size_t used_mem = get_used_memory() / 1024;
+    size_t total_mem = get_total_memory() / 1024;
     
-    itoa(free_mem, mem_val, 10);
+    char mem_str[48];
+    char free_val[10], used_val[10], total_val[10];
+    
+    itoa(free_mem, free_val, 10);
+    itoa(used_mem, used_val, 10);
+    itoa(total_mem, total_val, 10);
+    
     mem_str[0] = '\0';
-    strcat(mem_str, "Memory: ");
-    strcat(mem_str, mem_val);
-    strcat(mem_str, " KB");
+    strcat(mem_str, "Mem: ");
+    strcat(mem_str, free_val);
+    strcat(mem_str, "/");
+    strcat(mem_str, total_val);
+    strcat(mem_str, " KB free");
     
     // Clear the line first
     vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);

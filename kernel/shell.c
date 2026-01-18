@@ -9,6 +9,8 @@
 #include "cpu.h"
 #include "memory.h"
 #include "util.h"
+#include "fs.h"
+#include "../fs/include/fs.h"
 
 #define MAX_COMMAND_LENGTH 80
 
@@ -30,6 +32,11 @@ static command_t* command_list = NULL;
 static void cmd_help(int argc, char **argv);
 static void cmd_clear(int argc, char **argv);
 static void cmd_info(int argc, char **argv);
+static void cmd_reboot(int argc, char **argv);
+static void cmd_echo(int argc, char **argv);
+static void cmd_date(int argc, char **argv);
+static void cmd_cat(int argc, char **argv);
+static void cmd_version(int argc, char **argv);
 
 
 
@@ -78,13 +85,21 @@ static void cmd_info(int argc, char **argv) {
     
     // Memory Info
     size_t free_mem = get_free_memory() / 1024;
-    char mem_str[32];
-    char mem_val[10];
-    itoa(free_mem, mem_val, 10);
+    size_t used_mem = get_used_memory() / 1024;
+    size_t total_mem = get_total_memory() / 1024;
+    char mem_str[64];
+    char free_val[10], used_val[10], total_val[10];
+    itoa(free_mem, free_val, 10);
+    itoa(used_mem, used_val, 10);
+    itoa(total_mem, total_val, 10);
     mem_str[0] = '\0';
-    strcat(mem_str, "Free Memory: ");
-    strcat(mem_str, mem_val);
-    strcat(mem_str, " KB\n");
+    strcat(mem_str, "Memory: ");
+    strcat(mem_str, free_val);
+    strcat(mem_str, " KB free, ");
+    strcat(mem_str, used_val);
+    strcat(mem_str, " KB used, ");
+    strcat(mem_str, total_val);
+    strcat(mem_str, " KB total\n");
     terminal_puts(mem_str);
     
     // Uptime
@@ -132,6 +147,136 @@ static void cmd_info(int argc, char **argv) {
     terminal_puts(time_str);
     
     terminal_puts("\n");
+}
+
+static void cmd_reboot(int argc, char **argv) {
+    (void)argc; // Unused
+    (void)argv; // Unused
+    
+    terminal_puts("\nRebooting system...\n");
+    
+    // Wait a bit for the message to be visible
+    for (volatile int i = 0; i < 1000000; i++);
+    
+    // Trigger a reboot via keyboard controller
+    uint8_t temp;
+    do {
+        temp = inb(0x64);
+        if (temp & 0x02) {
+            // Wait for input buffer to be empty
+            continue;
+        }
+        outb(0x64, 0xFE); // Send reboot command
+    } while (1);
+}
+
+static void cmd_echo(int argc, char **argv) {
+    terminal_puts("\n");
+    
+    // Print all arguments separated by spaces
+    for (int i = 1; i < argc; i++) {
+        if (i > 1) {
+            terminal_puts(" ");
+        }
+        terminal_puts(argv[i]);
+    }
+    
+    terminal_puts("\n");
+}
+
+static void cmd_date(int argc, char **argv) {
+    (void)argc; // Unused
+    (void)argv; // Unused
+    
+    rtc_time_t time;
+    rtc_get_time(&time);
+    
+    char time_str[16];
+    char hour_str[3], min_str[3], sec_str[3];
+    itoa(time.hour, hour_str, 10);
+    itoa(time.minute, min_str, 10);
+    itoa(time.second, sec_str, 10);
+    
+    time_str[0] = '\0';
+    if (time.hour < 10) strcat(time_str, "0");
+    strcat(time_str, hour_str);
+    strcat(time_str, ":");
+    if (time.minute < 10) strcat(time_str, "0");
+    strcat(time_str, min_str);
+    strcat(time_str, ":");
+    if (time.second < 10) strcat(time_str, "0");
+    strcat(time_str, sec_str);
+    
+    terminal_puts("\n");
+    terminal_puts(time_str);
+    terminal_puts("\n");
+}
+
+static void cmd_cat(int argc, char **argv) {
+    if (argc < 2) {
+        terminal_puts("\nUsage: cat <filename>\n");
+        return;
+    }
+    
+    extern fs_node_t *fs_root;
+    if (!fs_root) {
+        terminal_puts("\nFilesystem not initialized\n");
+        return;
+    }
+    
+    // Find the file
+    fs_node_t *file = finddir_fs(fs_root, argv[1]);
+    if (!file) {
+        terminal_puts("\nFile not found: ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+        return;
+    }
+    
+    if ((file->flags & 0x7) != FS_FILE) {
+        terminal_puts("\nNot a file: ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+        return;
+    }
+    
+    // Read and display the file
+    uint8_t buffer[256];
+    uint32_t total_read = 0;
+    uint32_t file_size = file->length;
+    
+    terminal_puts("\n");
+    
+    while (total_read < file_size) {
+        uint32_t to_read = file_size - total_read;
+        if (to_read > sizeof(buffer)) {
+            to_read = sizeof(buffer);
+        }
+        
+        uint32_t read = read_fs(file, total_read, to_read, buffer);
+        if (read == 0) break;
+        
+        // Print the buffer
+        for (uint32_t i = 0; i < read; i++) {
+            terminal_putchar(buffer[i]);
+        }
+        
+        total_read += read;
+    }
+    
+    terminal_puts("\n");
+}
+
+static void cmd_version(int argc, char **argv) {
+    (void)argc; // Unused
+    (void)argv; // Unused
+    
+    terminal_puts("\nSkullOS v0.1.0\n");
+    terminal_puts("Build date: ");
+    terminal_puts(__DATE__);
+    terminal_puts(" ");
+    terminal_puts(__TIME__);
+    terminal_puts("\n\n");
 }
 
 // Register a new command
@@ -182,6 +327,11 @@ void shell_init(void) {
     shell_register_command("help", "Show this help message", cmd_help);
     shell_register_command("clear", "Clear the screen", cmd_clear);
     shell_register_command("info", "Show system information", cmd_info);
+    shell_register_command("reboot", "Reboot the system", cmd_reboot);
+    shell_register_command("echo", "Echo arguments", cmd_echo);
+    shell_register_command("date", "Show current time", cmd_date);
+    shell_register_command("cat", "Display file contents", cmd_cat);
+    shell_register_command("version", "Show OS version", cmd_version);
 }
 
 void shell_print_prompt(void) {

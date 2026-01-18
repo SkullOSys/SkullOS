@@ -52,6 +52,37 @@ static fs_node_t *fs_finddir(fs_node_t *node, char *name) {
     return 0;
 }
 
+// Public API functions
+uint32_t read_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer) {
+    if (!node) return 0;
+    return fs_read(node, offset, size, buffer);
+}
+
+uint32_t write_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer) {
+    if (!node) return 0;
+    return fs_write(node, offset, size, buffer);
+}
+
+void open_fs(fs_node_t *node, uint8_t read, uint8_t write) {
+    if (!node) return;
+    fs_open(node, read, write);
+}
+
+void close_fs(fs_node_t *node) {
+    if (!node) return;
+    fs_close(node);
+}
+
+struct dirent *readdir_fs(fs_node_t *node, uint32_t index) {
+    if (!node) return 0;
+    return fs_readdir(node, index);
+}
+
+fs_node_t *finddir_fs(fs_node_t *node, char *name) {
+    if (!node) return 0;
+    return fs_finddir(node, name);
+}
+
 // Helper function to create a new file node
 fs_node_t *make_file(char *name, uint32_t flags, uint32_t size) {
     fs_node_t *node = (fs_node_t*)kmalloc(sizeof(fs_node_t));
