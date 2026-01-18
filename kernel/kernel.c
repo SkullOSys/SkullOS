@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "timer.h"
 #include "cpu.h"
+#include "syscall.h"
 
 // Kernel entry point
 __attribute__((section(".text.entry")))
@@ -83,6 +84,9 @@ void kernel_main(void) {
     
     vga_manager_puts("Initializing timer...\n");
     timer_init();
+    
+    vga_manager_puts("Initializing system calls...\n");
+    syscall_init();
     
     // Enable interrupts
     asm volatile ("sti");

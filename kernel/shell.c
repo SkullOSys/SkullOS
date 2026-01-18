@@ -12,6 +12,9 @@
 #include "fs.h"
 #include "../fs/include/fs.h"
 
+// Forward declaration
+fs_node_t *resolve_path(const char *path);
+
 #define MAX_COMMAND_LENGTH 80
 
 static char command_buffer[MAX_COMMAND_LENGTH];
@@ -37,6 +40,10 @@ static void cmd_echo(int argc, char **argv);
 static void cmd_date(int argc, char **argv);
 static void cmd_cat(int argc, char **argv);
 static void cmd_version(int argc, char **argv);
+static void cmd_pwd(int argc, char **argv);
+static void cmd_cd(int argc, char **argv);
+static void cmd_sleep(int argc, char **argv);
+static void cmd_ps(int argc, char **argv);
 
 
 
@@ -279,6 +286,91 @@ static void cmd_version(int argc, char **argv) {
     terminal_puts("\n\n");
 }
 
+// Current working directory (simple implementation)
+static char current_dir[256] = "/";
+
+static void cmd_pwd(int argc, char **argv) {
+    (void)argc; // Unused
+    (void)argv; // Unused
+    
+    terminal_puts("\n");
+    terminal_puts(current_dir);
+    terminal_puts("\n");
+}
+
+static void cmd_cd(int argc, char **argv) {
+    extern fs_node_t *fs_root;
+    
+    if (argc < 2) {
+        // No argument, go to root
+        strcpy(current_dir, "/");
+        return;
+    }
+    
+    char new_path[256];
+    
+    // Handle absolute paths
+    if (argv[1][0] == '/') {
+        strncpy(new_path, argv[1], 255);
+        new_path[255] = '\0';
+    } else {
+        // Relative path
+        strncpy(new_path, current_dir, 255);
+        if (new_path[strlen(new_path) - 1] != '/') {
+            strcat(new_path, "/");
+        }
+        strncat(new_path, argv[1], 255 - strlen(new_path));
+    }
+    
+    // Resolve path
+    fs_node_t *dir = resolve_path(new_path);
+    if (dir && (dir->flags & 0x7) == FS_DIRECTORY) {
+        strncpy(current_dir, new_path, 255);
+        current_dir[255] = '\0';
+        // Ensure it ends with /
+        if (current_dir[strlen(current_dir) - 1] != '/') {
+            strcat(current_dir, "/");
+        }
+    } else {
+        terminal_puts("\nDirectory not found: ");
+        terminal_puts(argv[1]);
+        terminal_puts("\n");
+    }
+}
+
+static void cmd_sleep(int argc, char **argv) {
+    if (argc < 2) {
+        terminal_puts("\nUsage: sleep <seconds>\n");
+        return;
+    }
+    
+    // Simple atoi implementation
+    int seconds = 0;
+    const char *p = argv[1];
+    while (*p >= '0' && *p <= '9') {
+        seconds = seconds * 10 + (*p - '0');
+        p++;
+    }
+    
+    if (seconds > 0) {
+        uint32_t start = timer_get_uptime_seconds();
+        while (timer_get_uptime_seconds() - start < (uint32_t)seconds) {
+            // Busy wait
+            asm volatile ("pause");
+        }
+    }
+}
+
+static void cmd_ps(int argc, char **argv) {
+    (void)argc; // Unused
+    (void)argv; // Unused
+    
+    terminal_puts("\nPID  Name\n");
+    terminal_puts("---  ----\n");
+    terminal_puts("  1  shell\n");
+    terminal_puts("\n");
+}
+
 // Register a new command
 void shell_register_command(const char* name, const char* description, command_handler_t handler) {
     command_t* new_cmd = (command_t*)kmalloc(sizeof(command_t));
@@ -332,6 +424,10 @@ void shell_init(void) {
     shell_register_command("date", "Show current time", cmd_date);
     shell_register_command("cat", "Display file contents", cmd_cat);
     shell_register_command("version", "Show OS version", cmd_version);
+    shell_register_command("pwd", "Print working directory", cmd_pwd);
+    shell_register_command("cd", "Change directory", cmd_cd);
+    shell_register_command("sleep", "Sleep for N seconds", cmd_sleep);
+    shell_register_command("ps", "List processes", cmd_ps);
 }
 
 void shell_print_prompt(void) {
