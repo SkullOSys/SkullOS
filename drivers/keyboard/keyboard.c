@@ -178,6 +178,10 @@ uint16_t keyboard_get_scancode(void) {
     return scancode;
 }
 
+void keyboard_reset(void) {
+    keyboard_initialized = false;
+}
+
 // Initialize the keyboard controller
 void keyboard_init(void) {
     if (keyboard_initialized) {

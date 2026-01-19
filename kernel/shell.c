@@ -165,6 +165,9 @@ static void cmd_reboot(int argc, char **argv) {
     // Wait a bit for the message to be visible
     for (volatile int i = 0; i < 1000000; i++);
     
+    // Reset keyboard state before rebooting
+    keyboard_reset();
+
     // Trigger a reboot via keyboard controller
     uint8_t temp;
     do {

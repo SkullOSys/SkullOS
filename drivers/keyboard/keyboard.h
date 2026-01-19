@@ -151,6 +151,7 @@ enum {
 
 // Function prototypes
 void keyboard_init(void);
+void keyboard_reset(void);
 void keyboard_install(void);
 void keyboard_handler(void);
 char keyboard_getchar(void);
