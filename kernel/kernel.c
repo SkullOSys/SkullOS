@@ -5,6 +5,7 @@
 #include "shell.h"
 #include "idt.h"
 #include "../drivers/keyboard/keyboard.h"
+#include "../drivers/ata/ata.h"
 #include "fs.h"
 #include "memory.h"
 #include "timer.h"
@@ -90,6 +91,42 @@ void kernel_main(void) {
     
     // Enable interrupts
     asm volatile ("sti");
+    
+    // Initialize ATA driver
+    vga_manager_puts("Initializing ATA driver...\n");
+    ata_init();
+
+    // ATA Driver Test
+    vga_manager_puts("Running ATA driver test...\n");
+    uint8_t write_buffer[512];
+    uint8_t read_buffer[512];
+
+    // Prepare a test pattern
+    const char* test_string = "SkullOS ATA Driver Test! If you see this, writing and reading works.";
+    for (uint16_t i = 0; i < 512; i++) {
+        if (i < strlen(test_string)) {
+            write_buffer[i] = test_string[i];
+        } else {
+            write_buffer[i] = 0;
+        }
+    }
+
+    // Write to LBA 0
+    vga_manager_puts("Writing to sector 0...\n");
+    ata_write_sector(0, write_buffer);
+
+    // Read from LBA 0
+    vga_manager_puts("Reading from sector 0...\n");
+    ata_read_sector(0, read_buffer);
+
+    // Verify
+    vga_manager_puts("Read back: \n");
+    for(int i = 0; i < 512; i++) {
+        if(read_buffer[i] != 0) {
+            vga_manager_putchar(read_buffer[i]);
+        }
+    }
+    vga_manager_puts("\nATA test complete.\n");
     
     // Initialize filesystem
     vga_manager_puts("Initializing filesystem...\n");
