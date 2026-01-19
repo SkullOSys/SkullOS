@@ -36,7 +36,7 @@ static void format_time_str(char* str, uint8_t hour, uint8_t minute, uint8_t sec
 
 // Draw the title bar
 static void gui_draw_title_bar() {
-    vga_manager_fullscreen_set_color(VGA_COLOR_BLACK, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     for (int x = 40; x < 80; x++) {
         vga_manager_fullscreen_set_cursor_pos(x, 0);
         vga_manager_fullscreen_putchar(' ');
@@ -51,7 +51,7 @@ static void gui_draw_title_bar() {
 
 // Draw a horizontal line
 static void gui_draw_hline(int y) {
-    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     for (int x = 40; x < 80; x++) {
         vga_manager_fullscreen_set_cursor_pos(x, y);
         vga_manager_fullscreen_putchar('-');
@@ -85,7 +85,7 @@ void gui_draw_memory() {
     }
     
     // Draw memory info
-    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     vga_manager_fullscreen_set_cursor_pos(41, 5);
     vga_manager_fullscreen_puts(mem_str);
 }
@@ -122,7 +122,7 @@ void gui_draw_uptime() {
     }
     
     // Draw uptime info
-    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_MAGENTA, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     vga_manager_fullscreen_set_cursor_pos(41, 7);
     vga_manager_fullscreen_puts(uptime_str);
 }
@@ -146,14 +146,14 @@ void gui_draw_cpu_info() {
     strcat(cpu_str, vendor_display);
     
     // Clear the line first
-    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     for (int x = 40; x < 80; x++) {
         vga_manager_fullscreen_set_cursor_pos(x, 9);
         vga_manager_fullscreen_putchar(' ');
     }
     
     // Draw CPU info
-    vga_manager_fullscreen_set_color(VGA_COLOR_YELLOW, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_YELLOW, VGA_COLOR_BLACK);
     vga_manager_fullscreen_set_cursor_pos(41, 9);
     vga_manager_fullscreen_puts(cpu_str);
 }
@@ -166,23 +166,44 @@ void gui_draw_time() {
     format_time_str(time_str, time.hour, time.minute, time.second);
     
     // Clear the line first
-    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     for (int x = 40; x < 80; x++) {
         vga_manager_fullscreen_set_cursor_pos(x, 3);
         vga_manager_fullscreen_putchar(' ');
     }
     
     // Draw time with label
-    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
     vga_manager_fullscreen_set_cursor_pos(41, 3);
     vga_manager_fullscreen_puts("Time: ");
     vga_manager_fullscreen_puts(time_str);
 }
 
+void gui_draw_logo() {
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+    vga_manager_fullscreen_set_cursor_pos(48, 12);
+    vga_manager_fullscreen_puts("    .--.    ");
+    vga_manager_fullscreen_set_cursor_pos(48, 13);
+    vga_manager_fullscreen_puts("   |o_o |   ");
+    vga_manager_fullscreen_set_cursor_pos(48, 14);
+    vga_manager_fullscreen_puts("   |:_/ |   ");
+    vga_manager_fullscreen_set_cursor_pos(48, 15);
+    vga_manager_fullscreen_puts("  //   \\ \\  ");
+    vga_manager_fullscreen_set_cursor_pos(48, 16);
+    vga_manager_fullscreen_puts(" (|     | ) ");
+    vga_manager_fullscreen_set_cursor_pos(48, 17);
+    vga_manager_fullscreen_puts("/'\\_   _/`\\");
+    vga_manager_fullscreen_set_cursor_pos(48, 18);
+    vga_manager_fullscreen_puts("\\___)=(___/");
+    vga_manager_fullscreen_puts("NOT YOUR TUX");
+}
+
 void gui_init() {
     vga_manager_set_context(true);
-    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     vga_manager_clear();
+
+    gui_draw_logo();
     
     // Draw title bar
     gui_draw_title_bar();
@@ -203,7 +224,7 @@ void gui_init() {
     gui_draw_hline(24);
     
     // Draw system info label
-    vga_manager_fullscreen_set_color(VGA_COLOR_YELLOW, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     vga_manager_fullscreen_set_cursor_pos(41, 2);
     vga_manager_fullscreen_puts("System Status");
     
@@ -214,7 +235,7 @@ void gui_init() {
     gui_draw_cpu_info();
     
     // Draw footer
-    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE);
+    vga_manager_fullscreen_set_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     vga_manager_fullscreen_set_cursor_pos(41, 23);
     vga_manager_fullscreen_puts("SkullOS v0.1.0");
 }

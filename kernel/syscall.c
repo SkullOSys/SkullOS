@@ -14,7 +14,6 @@ extern void syscall_handler_asm(void);
 
 // Current process ID (simple implementation)
 static int current_pid = 1;
-static int next_pid = 2;
 
 // System call handler (called from assembly)
 // Arguments are passed via registers: eax=syscall_num, ebx=arg1, ecx=arg2, edx=arg3
@@ -117,7 +116,6 @@ uint32_t sys_read(int fd, char *buf, uint32_t count) {
 int sys_open(const char *pathname, int flags) {
     (void)flags;  // Ignore flags for now
     
-    extern fs_node_t *fs_root;
     fs_node_t *file = resolve_path(pathname);
     
     if (file && (file->flags & 0x7) == FS_FILE) {
