@@ -195,6 +195,7 @@ void gui_draw_logo() {
     vga_manager_fullscreen_puts("/'\\_   _/`\\");
     vga_manager_fullscreen_set_cursor_pos(48, 18);
     vga_manager_fullscreen_puts("\\___)=(___/");
+    vga_manager_fullscreen_set_color(VGA_COLOR_RED, VGA_COLOR_BLACK);
     vga_manager_fullscreen_puts("NOT YOUR TUX");
 }
 
