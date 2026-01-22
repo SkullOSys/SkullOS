@@ -11,6 +11,7 @@
 #include "util.h"
 #include "fs.h"
 #include "../fs/include/fs.h"
+#include "../bios/bios.h"
 
 // Forward declaration
 fs_node_t *resolve_path(const char *path);
@@ -44,6 +45,7 @@ static void cmd_pwd(int argc, char **argv);
 static void cmd_cd(int argc, char **argv);
 static void cmd_sleep(int argc, char **argv);
 static void cmd_ps(int argc, char **argv);
+static void cmd_bios(int argc, char **argv);
 
 
 
@@ -374,6 +376,12 @@ static void cmd_ps(int argc, char **argv) {
     terminal_puts("\n");
 }
 
+static void cmd_bios(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
+    bios_show_interface();
+}
+
 // Register a new command
 void shell_register_command(const char* name, const char* description, command_handler_t handler) {
     command_t* new_cmd = (command_t*)kmalloc(sizeof(command_t));
@@ -431,6 +439,7 @@ void shell_init(void) {
     shell_register_command("cd", "Change directory", cmd_cd);
     shell_register_command("sleep", "Sleep for N seconds", cmd_sleep);
     shell_register_command("ps", "List processes", cmd_ps);
+    shell_register_command("bios", "Enter the BIOS", cmd_bios);
 }
 
 void shell_print_prompt(void) {

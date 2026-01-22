@@ -49,6 +49,10 @@ void vga_manager_set_context(bool is_gui) {
     update_cursor();
 }
 
+bool vga_manager_get_context(void) {
+    return (current_context == &gui_context);
+}
+
 void vga_manager_clear() {
     const uint16_t blank = vga_entry(' ', current_context->color);
     for (int y = 0; y < current_context->height; y++) {

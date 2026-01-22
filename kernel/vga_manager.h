@@ -15,6 +15,7 @@ typedef struct {
 
 void vga_manager_init(void);
 void vga_manager_set_context(bool is_gui);
+bool vga_manager_get_context(void);
 
 void vga_manager_putchar(char c);
 void vga_manager_puts(const char* str);

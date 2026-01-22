@@ -19,7 +19,7 @@ KERNEL_SRCS = kernel/kernel.c kernel/util.c kernel/vga.c kernel/vga_manager.c ke
 FS_SRCS = fs/src/fs.c fs/src/initrd.c fs/src/skullfs.c fs/src/path.c
 FS_OBJS = $(FS_SRCS:.c=.o)
 ASM_SRCS = kernel/interrupts.asm
-DRIVER_SRCS = drivers/keyboard/keyboard.c drivers/rtc/rtc.c drivers/ata/ata.c
+DRIVER_SRCS = drivers/keyboard/keyboard.c drivers/rtc/rtc.c drivers/ata/ata.c bios/bios.c
 KERNEL_OBJS = $(KERNEL_SRCS:.c=.o) $(DRIVER_SRCS:.c=.o) $(ASM_SRCS:.asm=.o)
 
 GUI_SRCS = gui/gui.c
@@ -45,7 +45,7 @@ kernel.bin: kernel.elf
 
 # Kernel ELF file
 kernel.elf: $(KERNEL_OBJS) $(GUI_OBJS) $(FS_OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ --start-group $^ --end-group
 
 # Kernel objects
 kernel/%.o: kernel/%.c
