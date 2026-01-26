@@ -26,33 +26,3 @@ void panic(const char* message) {
         asm volatile ("hlt");
     }
 }
-
-// Simple itoa implementation (helper function for integers to string)
-char* itoa(int value, char* str, int base) {
-    (void)base; // Base parameter is not used in this implementation
-    
-    char* ptr = str, *ptr1 = str, tmp_char;
-
-    // Handle 0 explicitly, otherwise empty string is printed
-    if (value == 0) {
-        *ptr++ = '0';
-        *ptr = '\0';
-        return str;
-    }
-
-    // Process individual digits
-    while (value != 0) {
-        *ptr++ = '0' + (value % 10);
-        value /= 10;
-    }
-    *ptr = '\0';
-
-    // Reverse the string
-    ptr--;
-    while (ptr1 < ptr) {
-        tmp_char = *ptr;
-        *ptr-- = *ptr1;
-        *ptr1++ = tmp_char;
-    }
-    return str;
-}

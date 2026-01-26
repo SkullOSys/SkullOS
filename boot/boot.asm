@@ -18,6 +18,40 @@ print_string:
     ret
 
 ; GDT
+
+;------------------------------------------------------------------------------
+; detect_memory
+; Detects system memory using BIOS interrupt 0x15, EAX=0xE820.
+; Stores the memory map at 0x8500.
+;------------------------------------------------------------------------------
+detect_memory:
+    pusha
+    mov dword [0x8500], 0 ; Number of entries
+    mov ebx, 0            ; EBX must be 0 for the first call
+    mov di, 0x8504        ; ES:DI points to the buffer for the entries
+.next_entry:
+    mov eax, 0xe820       ; EAX = 0xE820
+    mov edx, 0x534d4150   ; EDX = 'SMAP'
+    mov ecx, 24           ; ECX = 24 bytes (size of the structure)
+    int 0x15
+    jc .error             ; If carry is set, there was an error
+
+    cmp eax, 0x534d4150   ; Check for 'SMAP' signature
+    jne .error
+
+    add di, 24      ; The size of the returned structure
+    cmp ebx, 0      ; if ebx is 0, we are done
+    je .done
+
+    inc dword [0x8500]
+    jmp .next_entry
+
+.error:
+    mov dword [0x8500], 0
+.done:
+    popa
+    ret
+
 gdt_start:
     dq 0x0000000000000000  ; Null descriptor
 
@@ -57,6 +91,9 @@ start:
     mov ss, ax
     mov sp, 0x7C00      ; Stack grows down from 0x7C00
     sti
+
+    ; Detect memory
+    call detect_memory
 
     ; Save boot drive
     mov [boot_drive], dl

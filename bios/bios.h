@@ -6,6 +6,21 @@
 #include "../drivers/keyboard/keyboard.h"
 #include "../kernel/vga_manager.h"
 
+// E820 memory map entry structure
+typedef struct __attribute__((packed)) {
+    uint64_t base;
+    uint64_t length;
+    uint32_t type;
+    uint32_t acpi_ext;
+} e820_entry_t;
+
+// E820 memory types
+#define E820_RAM        1   // Usable memory
+#define E820_RESERVED   2   // Reserved memory
+#define E820_ACPI       3   // ACPI Reclaimable memory
+#define E820_NVS        4   // ACPI NVS memory
+#define E820_BADRAM     5   // Bad memory
+
 // BIOS configuration structure
 typedef struct {
     bool show_fps;

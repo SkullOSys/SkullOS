@@ -104,3 +104,39 @@ char* strncat(char* dest, const char* src, size_t n) {
     *d = '\0';
     return dest;
 }
+
+char* itoa(int value, char* str, int base) {
+    char *p = str;
+    char *p1, *p2;
+    unsigned long v = value;
+
+    // Handle negative numbers for base 10
+    if (value < 0 && base == 10) {
+        v = -value;
+        *p++ = '-';
+    }
+
+    p1 = p;
+
+    // Convert to string
+    do {
+        int r = v % base;
+        *p++ = (r < 10) ? (r + '0') : (r + 'a' - 10);
+        v /= base;
+    } while (v > 0);
+
+    // Add null terminator
+    *p = '\0';
+
+    // Reverse the string
+    p2 = p - 1;
+    while (p1 < p2) {
+        char tmp = *p1;
+        *p1 = *p2;
+        *p2 = tmp;
+        p1++;
+        p2--;
+    }
+
+    return str;
+}

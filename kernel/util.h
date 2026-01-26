@@ -16,6 +16,6 @@ static inline uint16_t inw(uint16_t port) {
     return ret;
 }
 
-char* itoa(int value, char* str, int base);
+
 
 #endif // KERNEL_UTIL_H

@@ -2,6 +2,8 @@
 #include "../drivers/keyboard/keyboard.h"
 #include "../kernel/vga_manager.h"
 #include <stddef.h>
+#include <libc/include/string.h>
+#include "../fs/include/fs.h"
 
 // Simple delay function
 static void delay(int count) {
@@ -17,7 +19,67 @@ static bios_config_t bios_config = {
 };
 
 void bios_init(void) {
-    // Initialize any BIOS-specific hardware here
+    // Detect memory from e820 map provided by bootloader
+    uint32_t num_entries = *(uint32_t*)0x8500;
+    e820_entry_t* mem_map = (e820_entry_t*)0x8504;
+    
+    uint64_t total_mem = 0;
+    
+    if (num_entries > 0) {
+        for (uint32_t i = 0; i < num_entries; i++) {
+            if (mem_map[i].type == E820_RAM) {
+                total_mem += mem_map[i].length;
+            }
+        }
+    }
+    
+    bios_config.memory_size_mb = total_mem / (1024 * 1024);
+
+    // Load config from file
+    fs_node_t *node = finddir_fs(fs_root, "bios.cfg");
+    if (node) {
+        read_fs(node, 0, sizeof(bios_config_t), (uint8_t*)&bios_config);
+    }
+}
+
+static void bios_system_config_menu(void) {
+    vga_manager_clear();
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+    vga_manager_puts(" System Configuration ");
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+    vga_manager_puts("\n\n");
+    vga_manager_puts("1. Toggle Show FPS (Currently: ");
+    vga_manager_puts(bios_config.show_fps ? "Enabled" : "Disabled");
+    vga_manager_puts(")\n");
+    vga_manager_puts("2. Toggle Debug Mode (Currently: ");
+    vga_manager_puts(bios_config.debug_mode ? "Enabled" : "Disabled");
+    vga_manager_puts(")\n");
+    vga_manager_puts("ESC. Back to main menu\n\n");
+
+    uint32_t last_key = 0;
+    while (1) {
+        uint16_t scancode = keyboard_get_scancode();
+        if (scancode != 0) {
+            last_key = scancode;
+        } else if (last_key != 0) {
+            if (last_key == 0x02) { // '1' key
+                bios_config.show_fps = !bios_config.show_fps;
+                // Redraw menu
+                bios_system_config_menu();
+                return;
+            } else if (last_key == 0x03) { // '2' key
+                bios_config.debug_mode = !bios_config.debug_mode;
+                // Redraw menu
+                bios_system_config_menu();
+                return;
+            } else if (last_key == 0x01) { // ESC key
+                delay(100000);
+                return;
+            }
+            last_key = 0;
+        }
+        delay(10000);
+    }
 }
 
 void bios_show_interface(void) {
@@ -52,29 +114,36 @@ void bios_show_interface(void) {
     
     // Simple itoa for memory size
     char mem_str[16];
-    char *p = mem_str + sizeof(mem_str) - 1;
-    *p = '\0';
-    uint32_t n = bios_config.memory_size_mb;
-    do {
-        *--p = '0' + (n % 10);
-        n /= 10;
-    } while (n > 0);
-    vga_manager_puts(p);
+    itoa(bios_config.memory_size_mb, mem_str, 10);
+    vga_manager_puts(mem_str);
     vga_manager_puts(" MB\n\n");
     
-    vga_manager_puts("\n\nPress ESC to exit BIOS...");
+    vga_manager_puts("\n\nPress a ESC to exit BIOS...");
+    vga_manager_puts("\n\nPress a key to select an option...");
     
-    // Wait for ESC key with debounce
+    // Wait for key with debounce
     uint32_t last_key = 0;
     while (1) {
         uint16_t scancode = keyboard_get_scancode();
         if (scancode != 0) {
             last_key = scancode;
-        } else if (last_key == 0x01) {  // ESC key released
-            delay(100000);  // Small delay for debounce
-            break;
+        } else if (last_key != 0) {
+            if (last_key == 0x03) { // '2' key for System Configuration
+                bios_system_config_menu();
+                // Redraw main menu after returning
+                bios_show_interface();
+                return;
+            } else if (last_key == 0x05) { // '4' key for Save & Exit
+                bios_save_config();
+                delay(100000);
+                break;
+            } else if (last_key == 0x01) {  // ESC key to exit without saving
+                delay(100000);
+                break;
+            }
+            last_key = 0;
         }
-        delay(10000);  // Small delay to prevent CPU spin
+        delay(10000);
     }
     
     // Restore VGA context
@@ -92,6 +161,9 @@ bios_config_t* bios_get_config(void) {
 }
 
 void bios_save_config(void) {
-    // In a real implementation, this would save to NVRAM or disk
-    // For now, we just keep it in memory
+    fs_node_t *node = finddir_fs(fs_root, "bios.cfg");
+    if (!node) {
+        node = skullfs_create_file(fs_root, "bios.cfg");
+    }
+    write_fs(node, 0, sizeof(bios_config_t), (uint8_t*)&bios_config);
 }

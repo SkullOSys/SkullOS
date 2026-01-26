@@ -29,35 +29,7 @@ static const char* SKULL_ART[] = {
 #define SKULL_LINES (sizeof(SKULL_ART) / sizeof(char*))
 #define LOADING_BAR_WIDTH 60
 
-// Simple itoa implementation (helper function for integers to string)
-static char* itoa(int value, char* str, int base) {
-    (void)base; // Base parameter is not used in this implementation
-    
-    char* ptr = str, *ptr1 = str, tmp_char;
 
-    // Handle 0 explicitly, otherwise empty string is printed
-    if (value == 0) {
-        *ptr++ = '0';
-        *ptr = '\0';
-        return str;
-    }
-
-    // Process individual digits
-    while (value != 0) {
-        *ptr++ = '0' + (value % 10);
-        value /= 10;
-    }
-    *ptr = '\0';
-
-    // Reverse the string
-    ptr--;
-    while (ptr1 < ptr) {
-        tmp_char = *ptr;
-        *ptr-- = *ptr1;
-        *ptr1++ = tmp_char;
-    }
-    return str;
-}
 
 // Function to display the boot animation
 void show_boot_animation(void) {
