@@ -118,8 +118,8 @@ void bios_show_interface(void) {
     vga_manager_puts(mem_str);
     vga_manager_puts(" MB\n\n");
     
-    vga_manager_puts("\n\nPress a ESC to exit BIOS...");
     vga_manager_puts("\n\nPress a key to select an option...");
+    vga_manager_puts("\nPress a ESC to exit BIOS...");
     
     // Wait for key with debounce
     uint32_t last_key = 0;
