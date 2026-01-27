@@ -43,42 +43,64 @@ void bios_init(void) {
 }
 
 static void bios_system_config_menu(void) {
-    vga_manager_clear();
-    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
-    vga_manager_puts(" System Configuration ");
-    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-    vga_manager_puts("\n\n");
-    vga_manager_puts("1. Toggle Show FPS (Currently: ");
-    vga_manager_puts(bios_config.show_fps ? "Enabled" : "Disabled");
-    vga_manager_puts(")\n");
-    vga_manager_puts("2. Toggle Debug Mode (Currently: ");
-    vga_manager_puts(bios_config.debug_mode ? "Enabled" : "Disabled");
-    vga_manager_puts(")\n");
-    vga_manager_puts("ESC. Back to main menu\n\n");
+    int selected_item = 0;
+    const int menu_items = 2;
 
-    uint32_t last_key = 0;
     while (1) {
-        uint16_t scancode = keyboard_get_scancode();
-        if (scancode != 0) {
-            last_key = scancode;
-        } else if (last_key != 0) {
-            if (last_key == 0x02) { // '1' key
-                bios_config.show_fps = !bios_config.show_fps;
-                // Redraw menu
-                bios_system_config_menu();
-                return;
-            } else if (last_key == 0x03) { // '2' key
-                bios_config.debug_mode = !bios_config.debug_mode;
-                // Redraw menu
-                bios_system_config_menu();
-                return;
-            } else if (last_key == 0x01) { // ESC key
-                delay(100000);
-                return;
+        vga_manager_clear();
+        vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+        vga_manager_puts(" System Configuration ");
+        vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+        vga_manager_puts("\n\n");
+
+        for (int i = 0; i < menu_items; i++) {
+            if (i == selected_item) {
+                vga_manager_set_color(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
+                vga_manager_putchar('>');
+            } else {
+                vga_manager_putchar(' ');
             }
-            last_key = 0;
+            switch (i) {
+                case 0:
+                    vga_manager_puts(" Toggle Show FPS (Currently: ");
+                    vga_manager_puts(bios_config.show_fps ? "Enabled" : "Disabled");
+                    vga_manager_puts(")\n");
+                    break;
+                case 1:
+                    vga_manager_puts(" Toggle Debug Mode (Currently: ");
+                    vga_manager_puts(bios_config.debug_mode ? "Enabled" : "Disabled");
+                    vga_manager_puts(")\n");
+                    break;
+            }
+            vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
         }
-        delay(10000);
+        vga_manager_puts("\nESC. Back to main menu\n\n");
+
+        uint32_t last_key = 0;
+        while (1) {
+            uint16_t scancode = keyboard_get_scancode();
+            if (scancode != 0) {
+                last_key = scancode;
+            } else if (last_key != 0) {
+                if (last_key == KEY_DOWN_ARROW) {
+                    selected_item = (selected_item + 1) % menu_items;
+                } else if (last_key == KEY_UP_ARROW) {
+                    selected_item = (selected_item - 1 + menu_items) % menu_items;
+                } else if (last_key == KEY_ENTER) {
+                    if (selected_item == 0) {
+                        bios_config.show_fps = !bios_config.show_fps;
+                    } else if (selected_item == 1) {
+                        bios_config.debug_mode = !bios_config.debug_mode;
+                    }
+                } else if (last_key == 0x01) { // ESC key
+                    delay(100000);
+                    return;
+                }
+                last_key = 0;
+                break; // Re-draw the menu
+            }
+            delay(10000);
+        }
     }
 }
 
@@ -86,66 +108,87 @@ void bios_show_interface(void) {
     // Save current VGA context
     bool prev_context = vga_manager_get_context();
     vga_manager_set_context(false);
-    
-    // Clear screen
-    vga_manager_clear();
-    
-    // Draw BIOS header
-    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
-    vga_manager_puts(" SkullOS BIOS v1.0 - Setup Utility ");
-    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-    vga_manager_puts("\n\n");
-    
-    // Show menu
-    vga_manager_puts("1. Boot Options\n");
-    vga_manager_puts("2. System Configuration\n");
-    vga_manager_puts("3. Power Management\n");
-    vga_manager_puts("4. Save & Exit\n\n");
-    
-    // Show current configuration
-    vga_manager_puts("Current Configuration:\n");
-    vga_manager_puts("  Show FPS: ");
-    vga_manager_puts(bios_config.show_fps ? "Enabled" : "Disabled");
-    vga_manager_puts("\n  Debug Mode: ");
-    vga_manager_puts(bios_config.debug_mode ? "Enabled" : "Disabled");
-    vga_manager_puts("\n  Boot Device: ");
-    vga_manager_puts(bios_config.boot_device == 0x80 ? "HDD" : "Other");
-    vga_manager_puts("\n  Memory: ");
-    
-    // Simple itoa for memory size
-    char mem_str[16];
-    itoa(bios_config.memory_size_mb, mem_str, 10);
-    vga_manager_puts(mem_str);
-    vga_manager_puts(" MB\n\n");
-    
-    vga_manager_puts("\n\nPress a key to select an option...");
-    vga_manager_puts("\nPress a ESC to exit BIOS...");
-    
-    // Wait for key with debounce
-    uint32_t last_key = 0;
+
+    int selected_item = 0;
+    const int menu_items = 4;
+
     while (1) {
-        uint16_t scancode = keyboard_get_scancode();
-        if (scancode != 0) {
-            last_key = scancode;
-        } else if (last_key != 0) {
-            if (last_key == 0x03) { // '2' key for System Configuration
-                bios_system_config_menu();
-                // Redraw main menu after returning
-                bios_show_interface();
-                return;
-            } else if (last_key == 0x05) { // '4' key for Save & Exit
-                bios_save_config();
-                delay(100000);
-                break;
-            } else if (last_key == 0x01) {  // ESC key to exit without saving
-                delay(100000);
-                break;
+        // Clear screen
+        vga_manager_clear();
+
+        // Draw BIOS header
+        vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
+        vga_manager_puts(" SkullOS BIOS v1.0 - Setup Utility ");
+        vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+        vga_manager_puts("\n\n");
+
+        // Show menu
+        for (int i = 0; i < menu_items; i++) {
+            if (i == selected_item) {
+                vga_manager_set_color(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
+                vga_manager_putchar('>');
+            } else {
+                vga_manager_putchar(' ');
             }
-            last_key = 0;
+            switch (i) {
+                case 0: vga_manager_puts(" 1. Boot Options\n"); break;
+                case 1: vga_manager_puts(" 2. System Configuration\n"); break;
+                case 2: vga_manager_puts(" 3. Power Management\n"); break;
+                case 3: vga_manager_puts(" 4. Save & Exit\n\n"); break;
+            }
+            vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
         }
-        delay(10000);
+
+        // Show current configuration
+        vga_manager_puts("Current Configuration:\n");
+        vga_manager_puts("  Show FPS: ");
+        vga_manager_puts(bios_config.show_fps ? "Enabled" : "Disabled");
+        vga_manager_puts("\n  Debug Mode: ");
+        vga_manager_puts(bios_config.debug_mode ? "Enabled" : "Disabled");
+        vga_manager_puts("\n  Boot Device: ");
+        vga_manager_puts(bios_config.boot_device == 0x80 ? "HDD" : "Other");
+        vga_manager_puts("\n  Memory: ");
+
+        // Simple itoa for memory size
+        char mem_str[16];
+        itoa(bios_config.memory_size_mb, mem_str, 10);
+        vga_manager_puts(mem_str);
+        vga_manager_puts(" MB\n\n");
+
+        vga_manager_puts("\n\nPress a key to select an option...");
+        vga_manager_puts("\nPress a ESC to exit BIOS...");
+
+        // Wait for key with debounce
+        uint32_t last_key = 0;
+        while (1) {
+            uint16_t scancode = keyboard_get_scancode();
+            if (scancode != 0) {
+                last_key = scancode;
+            } else if (last_key != 0) {
+                if (last_key == KEY_DOWN_ARROW) {
+                    selected_item = (selected_item + 1) % menu_items;
+                } else if (last_key == KEY_UP_ARROW) {
+                    selected_item = (selected_item - 1 + menu_items) % menu_items;
+                } else if (last_key == KEY_ENTER) {
+                    if (selected_item == 1) { // System Configuration
+                        bios_system_config_menu();
+                    } else if (selected_item == 3) { // Save & Exit
+                        bios_save_config();
+                        delay(100000);
+                        goto exit_loop;
+                    }
+                } else if (last_key == 0x01) {  // ESC key to exit without saving
+                    delay(100000);
+                    goto exit_loop;
+                }
+                last_key = 0;
+                break;  // Re-draw the menu
+            }
+            delay(10000);
+        }
     }
-    
+
+exit_loop:
     // Restore VGA context
     vga_manager_set_context(prev_context);
 }

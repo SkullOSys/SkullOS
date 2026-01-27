@@ -21,6 +21,10 @@ typedef struct __attribute__((packed)) {
 #define E820_NVS        4   // ACPI NVS memory
 #define E820_BADRAM     5   // Bad memory
 
+#define KEY_UP_ARROW 0x48
+#define KEY_DOWN_ARROW 0x50
+#define KEY_ENTER 0x1C
+
 // BIOS configuration structure
 typedef struct {
     bool show_fps;
