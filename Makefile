@@ -20,7 +20,9 @@ FS_SRCS = fs/src/fs.c fs/src/initrd.c fs/src/skullfs.c fs/src/path.c
 FS_OBJS = $(FS_SRCS:.c=.o)
 ASM_SRCS = kernel/interrupts.asm
 DRIVER_SRCS = drivers/keyboard/keyboard.c drivers/rtc/rtc.c drivers/ata/ata.c bios/bios.c
+GAMES_SRCS = games/games.c games/snake/snake.c
 KERNEL_OBJS = $(KERNEL_SRCS:.c=.o) $(DRIVER_SRCS:.c=.o) $(ASM_SRCS:.asm=.o)
+GAMES_OBJS = $(GAMES_SRCS:.c=.o)
 
 GUI_SRCS = gui/gui.c
 GUI_OBJS = $(GUI_SRCS:.c=.o)
@@ -44,7 +46,7 @@ kernel.bin: kernel.elf
 	$(OBJCOPY) -O binary $< $@
 
 # Kernel ELF file
-kernel.elf: $(KERNEL_OBJS) $(GUI_OBJS) $(FS_OBJS)
+kernel.elf: $(KERNEL_OBJS) $(GUI_OBJS) $(FS_OBJS) $(GAMES_OBJS)
 	$(LD) $(LDFLAGS) -o $@ --start-group $^ --end-group
 
 # Kernel objects
@@ -57,6 +59,13 @@ kernel/%.o: kernel/%.c
 
 # Rule for compiling driver files
 drivers/%.o: drivers/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule for compiling games files
+games/%.o: games/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+games/snake/%.o: games/snake/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Rule for compiling libc files
@@ -86,6 +95,8 @@ clean:
 	rm -f boot/*.bin
 	rm -f drivers/*.o
 	rm -f libc/*.o
+	rm -f games/*.o
+	rm -f games/snake/*.o
 
 # Run the OS in QEMU
 run: os.bin
