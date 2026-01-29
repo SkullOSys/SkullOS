@@ -48,6 +48,7 @@ static void cmd_sleep(int argc, char **argv);
 static void cmd_ps(int argc, char **argv);
 static void cmd_bios(int argc, char **argv);
 static void cmd_games(int argc, char **argv);
+static void cmd_hell(int argc, char **argv);
 
 
 
@@ -390,6 +391,34 @@ static void cmd_games(int argc, char **argv) {
     launch_games();
 }
 
+static void cmd_hell(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
+    
+    // Set color to red
+    vga_manager_set_context(false);
+    vga_manager_set_color(VGA_COLOR_RED, VGA_COLOR_BLACK);
+    
+    terminal_puts("\n");
+    terminal_puts("          .    .\n");
+    terminal_puts("          |\\   |\\\n");
+    terminal_puts("       _..|;__|;\n");
+    terminal_puts("     ,'   ';` \\';`-.\n");
+    terminal_puts("     7;-..     :   )\n");
+    terminal_puts(".--._)|   `;==,|,=='\n");
+    terminal_puts(" `\\`@; \\_ `<`G,\" G).\n");
+    terminal_puts("   `\\/-;,(  )  .>. )\n");
+    terminal_puts("       < ,-;'-.__.;'\n");
+    terminal_puts("        `\\_ `-,__,'\n");
+    terminal_puts("   gg      `-..,;,>\n");
+    terminal_puts("              `;;;;;\n");
+    terminal_puts("               `  `\n");
+    terminal_puts("\n");
+    
+    // Reset color to white
+    vga_manager_set_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+}
+
 // Register a new command
 void shell_register_command(const char* name, const char* description, command_handler_t handler) {
     command_t* new_cmd = (command_t*)kmalloc(sizeof(command_t));
@@ -449,6 +478,7 @@ void shell_init(void) {
     shell_register_command("ps", "List processes", cmd_ps);
     shell_register_command("bios", "Enter the BIOS", cmd_bios);
     shell_register_command("games", "Play games", cmd_games);
+    shell_register_command("hell", "Display hell ASCII art", cmd_hell);
 }
 
 void shell_print_prompt(void) {
