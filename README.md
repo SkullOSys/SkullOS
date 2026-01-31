@@ -1,49 +1,61 @@
 # SkullOS
 
-## Not Just Another Unix Clone
+### Not just another UNIX clone
 
-This project contains a minimalistic operatingsystem, thats written in C and Assembly. It can be executeed using QEMU.
+SkullOS is a hobby operating system written in C and Assembly for the x86 architecture. It is designed to be a minimalistic OS with a custom kernel, a shell, a simple file system, and a few applications.
 
-## Abhängigkeiten
+## Features
 
-- `nasm`
-- `qemu`
-- `x86_64-elf-gcc` (Cross-Compiler)
+*   **32-bit Protected Mode Kernel:** The kernel operates in 32-bit protected mode.
+*   **BIOS:** A simple BIOS with a setup utility to configure system settings.
+*   **Memory Detection:** The BIOS can detect the available memory.
+*   **GUI:** A basic graphical user interface.
+*   **Shell:** An interactive shell with a few commands.
+*   **Filesystem:** A simple filesystem with an initial ramdisk.
+*   **Drivers:** Drivers for keyboard, RTC, and ATA.
+*   **Games:** Includes a simple Snake game.
+*   **Boot Animation:** A boot animation is shown when the OS starts.
 
-### Installation (macOS mit Homebrew)
+## Project Structure
 
-```bash
-brew install x86_64-elf-gcc
-```
+*   `bios/`: Contains the BIOS code.
+*   `boot/`: Contains the 16-bit bootloader.
+*   `drivers/`: Contains the device drivers.
+*   `fs/`: Contains the file system implementation.
+*   `games/`: Contains a snake game.
+*   `gui/`: Contains the GUI module.
+*   `kernel/`: Contains the kernel source code.
+*   `libc/`: Contains a minimalistic C standard library.
+*   `tools/`: Contains tools for generating the initial ramdisk.
+*   `linker.ld`: The linker script.
+*   `Makefile`: The build script.
 
-**Wichtiger Hinweis:** Nach der Installation müssen Sie möglicherweise das `bin`-Verzeichnis von Homebrew zu Ihrem `PATH` hinzufügen. Für Apple Silicon (M1/M2) lautet der Befehl:
+## Dependencies
 
-```bash
-export PATH="/opt/homebrew/bin:$PATH"
-```
+To build and run SkullOS, you will need the following tools:
 
-Sie können diesen Befehl zu Ihrer `.zshrc` oder `.bash_profile` hinzufügen, um ihn dauerhaft zu machen.
+*   `nasm`
+*   `qemu`
+*   `x86_64-elf-gcc` (Cross-Compiler)
 
-## Struktur
+## Building and Running
 
-- `boot/`: Enthält den 16-Bit-Bootloader.
-- `kernel/`: Enthält den Kernel in C.
-- `gui/`: Enthält das GUI-Modul in C.
-- `linker.ld`: Linker-Skript.
-- `Makefile`: Build-Skript.
-
-## Bauen und Starten
-
-**Hinweis:** Führen Sie `make clean` aus, um alle alten Objektdateien zu entfernen, bevor Sie das Projekt bauen.
-
-Um das Betriebssystem zu bauen, führe folgenden Befehl aus:
-
-```bash
-make clean && make && make run
-```
-
-Um das Betriebssystem in QEMU zu starten, führe folgenden Befehl aus:
+To build the operating system, run the following command:
 
 ```bash
-qemu-system-i386 -drive format=raw,file=os.bin
+make
 ```
+
+To clean the build artifacts, run:
+
+```bash
+make clean
+```
+
+To run the OS in QEMU, use the following command:
+
+```bash
+make run
+```
+
+This will start QEMU in full-screen mode. You can exit the QEMU window by pressing `Ctrl+Alt+G`. The QEMU monitor can be accessed from the terminal where you launched the `make run` command.
